@@ -3,6 +3,8 @@ from mem_cell import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from functools import partial
+from src.utils import variable_summaries
+
 
 def entNet(vocab_size,sent_len,sent_numb,num_blocks,embedding_size,learning_rate,clip_gradients,opt,debug):
 
@@ -84,6 +86,15 @@ def entNet(vocab_size,sent_len,sent_numb,num_blocks,embedding_size,learning_rate
         learning_rate=learning_rate,
         optimizer=opt,
         clip_gradients=clip_gradients)
+        if debug:
+            tf.scalar_summary('accuracy', accuracy)
+            # tf.scalar_summary('loss', loss)
+            tf.histogram_summary('y',y)
+            variable_summaries(R,'R')
+            variable_summaries(H,'H')
+            variable_summaries(embeddings,'embeddings')
+
+
 
 
 
