@@ -40,11 +40,11 @@ def entNet(vocab_size,sent_len,sent_numb,num_blocks,embedding_size,learning_rate
         length = tf.cast(tf.reduce_sum(used, reduction_indices=1), tf.int32)
 
 
-        output, h_j = tf.nn.dynamic_rnn(cell, story_encoded,
+        output, last_state = tf.nn.dynamic_rnn(cell, story_encoded,
                                         sequence_length=length,
                                         initial_state=initial_state)
         ## split back the final RNN state (in its memory blocks (20)) => [batch,#block,d]
-        h_j = tf.pack(tf.split(1, num_blocks, h_j), axis=1)
+        h_j = tf.pack(tf.split(1, num_blocks, last_state), axis=1)
 
 
         ### p_j= qt * h_j  ==> scoring the pair (mem (h_j), question)
@@ -76,7 +76,9 @@ def entNet(vocab_size,sent_len,sent_numb,num_blocks,embedding_size,learning_rate
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
         prediction = tf.argmax(y, 1)
-        loss=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=A_input,logits=y))
+        # loss=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=A_input,logits=y))
+        loss=tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(labels=A_input,logits=y))
+
 
         global_step = tf.contrib.framework.get_or_create_global_step()
         #train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
@@ -90,6 +92,10 @@ def entNet(vocab_size,sent_len,sent_numb,num_blocks,embedding_size,learning_rate
             tf.scalar_summary('accuracy', accuracy)
             # tf.scalar_summary('loss', loss)
             tf.histogram_summary('y',y)
+
+            tf.histogram_summary('out',output)
+            tf.histogram_summary('last_state',last_state)
+
             variable_summaries(R,'R')
             variable_summaries(H,'H')
             variable_summaries(embeddings,'embeddings')

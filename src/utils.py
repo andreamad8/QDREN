@@ -7,9 +7,14 @@ import numpy as np
 import tensorflow as tf
 
 class Dataset():
-    def __init__(self, data='data/tasks_1-20_v1-2/en/'):
-        self._data = get_train_test(data)
+    def __init__(self, data='data/tasks_1-20_v1-2/en/',ts_num=1):
+        self._data = get_train_test(data,ts_num)
         self.len_train = len(self._data['train']['S'])
+        self.len_val = len(self._data['val']['S'])
+        self.len_test = len(self._data['test']['S'])
+        self.num_batches=0
+
+
 
     def make_batches(self,size, batch_size):
         """Returns a list of batch indices (tuples of indices).
@@ -19,8 +24,8 @@ class Dataset():
         # Returns
             A list of tuples of array indices.
         """
-        num_batches = int(np.ceil(size / float(batch_size)))
-        return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(0, num_batches)]
+        self.num_batches = int(np.ceil(size / float(batch_size)))
+        return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(0, self.num_batches)]
 
     def unison_shuffled_copies(self,a, b,c):
         assert len(a) == len(b)
@@ -51,8 +56,8 @@ class Dataset():
                 A_input:self._data['test']['A']}
 
 
-def get_train_test(which_task='data/tasks_1-20_v1-2/en/'):
-    train, val, test = load_task(which_task,1)
+def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1):
+    train, val, test = load_task(which_task,task_num)
     data = train + test + val
 
     vocab = sorted(reduce(lambda x, y: x | y, (set(list(chain.from_iterable(s)) + q + a) for s, q, a in data)))
@@ -62,7 +67,7 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/'):
     mean_story_size = int(np.mean([ len(s) for s, _, _ in data ]))
     sentence_size = max(map(len, chain.from_iterable(s for s, _, _ in data)))
     query_size = max(map(len, (q for _, q, _ in data)))
-    max_story_size = min(50, max_story_size)
+    max_story_size = max_story_size#min(50, max_story_size)
 
 
     vocab_size = len(word_idx) +1# +1 for nil word
@@ -192,8 +197,8 @@ def vectorize_data(data, word_idx, sentence_size, memory_size):
 
         # Make the last word of each sentence the time 'word' which
         # corresponds to vector of lookup table
-        for i in range(len(ss)):
-            ss[i][-1] = len(word_idx) - memory_size - i + len(ss)
+        #for i in range(len(ss)):
+        #    ss[i][-1] = len(word_idx) - memory_size - i + len(ss)
 
         # pad to memory_size
         lm = max(0, memory_size - len(ss))
