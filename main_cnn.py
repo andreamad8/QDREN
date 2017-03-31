@@ -25,6 +25,7 @@ import numpy as np
 import tensorflow as tf
 import random
 import docopt
+from tqdm import tqdm
 
 
 def main(arguments):
@@ -42,10 +43,10 @@ def main(arguments):
 
 
     sess = tf.InteractiveSession()
-    batch_size = 128
+    batch_size = 1024
     embedding_size = 100
-    num_blocks =
-    epoch =  10
+    num_blocks = 50
+    epoch =  3000
     learning_rate = 1e-3
 
     par={
@@ -55,7 +56,7 @@ def main(arguments):
         "learning_rate": learning_rate,
         "clip_gradients":40.0,
         "opt":"Adam",
-        "debug":False
+        "debug":True
         }
 
     #### MODEL
@@ -69,6 +70,7 @@ def main(arguments):
 
 
     sess.run(tf.initialize_all_variables())
+    from tqdm import tqdm
     for step in range(epoch):
         print("Epoch {}".format(step))
         te_loss=0
@@ -79,11 +81,11 @@ def main(arguments):
             te_loss+=loss_train
         loss_batch=te_loss/ data.len_train
 
-        if step % 10 == 0:
-            dic = data.get_dic_val(S_input,Q_input,A_input)
-            su,loss_val, acc_val = sess.run([merged,loss, accuracy], feed_dict=dic)
-            summary_writer_val.add_summary(su,step*data.num_batches)
-            print ('Step {}: loss_train = {:.2f}, acc_train = {:.2f} loss_val = {:.2f}, acc_val = {:.2f}'.format(step, loss_batch, acc_train,loss_val/ data.len_val, acc_val))
+
+        dic = data.get_dic_val(S_input,Q_input,A_input)
+        su,loss_val, acc_val = sess.run([merged,loss, accuracy], feed_dict=dic)
+        summary_writer_val.add_summary(su,step*data.num_batches)
+        print ('Step {}: loss_train = {:.2f}, acc_train = {:.2f} loss_val = {:.2f}, acc_val = {:.2f}'.format(step, loss_batch, acc_train,loss_val/ data.len_val, acc_val))
 
 
     dic = data.get_dic_test(S_input,Q_input,A_input)

@@ -97,7 +97,6 @@ def entNet(sent_numb,num_blocks,embedding_size,learning_rate,clip_gradients,opt,
 
             variable_summaries(R,'R')
             variable_summaries(H,'H')
-            variable_summaries(embeddings,'embeddings')
 
 
     return accuracy,prediction,loss,train_op,S_input,Q_input, A_input
