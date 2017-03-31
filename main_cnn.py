@@ -42,11 +42,11 @@ def main(arguments):
 
 
     sess = tf.InteractiveSession()
-    batch_size = 2
+    batch_size = 128
     embedding_size = 100
-    num_blocks = 2
-    epoch =  20
-    learning_rate = 1e-2
+    num_blocks =
+    epoch =  10
+    learning_rate = 1e-3
 
     par={
         "sent_numb":data._data['sent_numb'],
@@ -70,8 +70,9 @@ def main(arguments):
 
     sess.run(tf.initialize_all_variables())
     for step in range(epoch):
+        print("Epoch {}".format(step))
         te_loss=0
-        for i, elem in enumerate(data.get_batch_train(batch_size)):
+        for i, elem in tqdm(enumerate(data.get_batch_train(batch_size))):
             dic = data.get_dic_train(S_input,Q_input,A_input,elem[0],elem[1])
             summary,_, loss_train, acc_train = sess.run([merged,train_op, loss, accuracy], feed_dict=dic)
             summary_writer_train.add_summary(summary,step*(data.num_batches)+i)

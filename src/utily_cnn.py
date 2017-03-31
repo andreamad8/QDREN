@@ -12,6 +12,7 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 
 class Dataset():
     def __init__(self, data='data/cnn/questions/'):
@@ -117,7 +118,7 @@ def get_data(dirname,embeddings_index,max_sent=20,embedding_size=100,n_entities=
     S = []
     Q = []
     A = []
-    for fname in os.listdir(dirname):
+    for fname in tqdm(os.listdir(dirname)):
         data=[]
         filename=os.path.join(dirname, fname)
         for line in codecs.open(filename,'r', 'utf-8'):
@@ -131,7 +132,7 @@ def get_data(dirname,embeddings_index,max_sent=20,embedding_size=100,n_entities=
         ans = data[6].replace(" ", "_")
 
         ent = {data[i].split(":")[0]: data[i].split(":")[1].lower()  for i in range(8,len(data))}
-
+        question_ent= [question_ent[0]]
         for j in range(len(question_ent)):
             for i in range(len(question_ent[j])):
                 if question_ent[j][i] == "@placeholder":
@@ -140,29 +141,42 @@ def get_data(dirname,embeddings_index,max_sent=20,embedding_size=100,n_entities=
                     question_ent[j][i] = embeddings_index[question_ent[j][i]]
             question_ent[j] = np.sum(np.asarray(question_ent[j]),0)
 
+
         k = 0
         ris_ent_sorted_by_postion = {v:[]for k,v in ent.items()}
         for j in range(len(story_ent)):
             for i in range(len(story_ent[j])):
                 if(story_ent[j][i] in ent):
                     ris_ent_sorted_by_postion[ent[story_ent[j][i]]].append(k)
-                    story_ent[j][i] = embeddings_index[ent[story_ent[j][i]].replace(" ", "_")]
+                    if(ent[story_ent[j][i]]!=''):
+                        story_ent[j][i] = embeddings_index[ent[story_ent[j][i]].replace(" ", "_")]
+                    else:
+                        story_ent[j][i] = np.zeros(embedding_size)
                     k += 1
                 else:
-                    story_ent[j][i] = embeddings_index[story_ent[j][i]]
+                    if(story_ent[j][i]!=''):
+                        story_ent[j][i] = embeddings_index[story_ent[j][i]]
+                    else:
+                        story_ent[j][i] = np.zeros(embedding_size)
 
             story_ent[j] = np.sum(np.asarray(story_ent[j]),0)
-
         for i in range(len(story_ent),max_sent):
             story_ent.append(np.zeros(embedding_size))
 
-        index_anw = min(ris_ent_sorted_by_postion[ent[ans]])
+        temp={}
+        for k,v in ris_ent_sorted_by_postion.items():
+            if(len(v)>0):
+                temp[k]=min(v)
+        temp= sorted(temp, key=temp.get)
+        for i in range(len(temp)):
+            ris_ent_sorted_by_postion[temp[i]] = i
+        index_anw = ris_ent_sorted_by_postion[ent[ans]]
         ans_vec[index_anw]=1
-
-
-        S.append(np.array(story_ent))
+        # print(np.array(story_ent).shape)
+        S.append(np.array(story_ent[:max_sent]))
         Q.append(np.array(question_ent))
         A.append(ans_vec)
+
 
     return np.array(S),np.array(Q),np.array(A)
 
