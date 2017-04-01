@@ -1,20 +1,21 @@
-# import numpy as np
-# import tensorflow as tf
-# from gensim.models import Word2Vec
-# import gensim
-# import os
-# from nltk.tokenize import sent_tokenize
-# from nltk.tokenize import TweetTokenizer
-# import nltk
-# import codecs
-# import sys
-# from tqdm import tqdm
+import numpy as np
+import tensorflow as tf
+from gensim.models import Word2Vec
+import gensim
+import os
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import TweetTokenizer
+import nltk
+import codecs
+import sys
+from tqdm import tqdm
+import cPickle as pickle
 
-def get_data(dirname,file_list,embeddings_index,max_sent=20,embedding_size=100,n_entities=700):
+def get_data(dirname,file_lists,embeddings_index,max_sent=20,embedding_size=100,n_entities=700):
     S = []
     Q = []
     A = []
-    for fname in tqdm(file_list):
+    for fname in tqdm(os.listdir(dirname)):
         data=[]
         filename=os.path.join(dirname, fname)
         for line in codecs.open(filename,'r', 'utf-8'):
@@ -80,47 +81,36 @@ def get_data(dirname,file_list,embeddings_index,max_sent=20,embedding_size=100,n
     return np.array(S),np.array(Q),np.array(A)
 
 
-def make_batches(size, batch_size):
-    """Returns a list of batch indices (tuples of indices).
-    # Arguments
-        size: Integer, total size of the data to slice into batches.
-        batch_size: Integer, batch size.
-    # Returns
-        A list of tuples of array indices.
-    """
-    num_batches = int(np.ceil(size / float(batch_size)))
-    return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(0, num_batches)]
 
 
-# def get_vocab_and_index(emb_file='data/emb_100_CBOW_wind_5.txt'):
-#     f = codecs.open(emb_file, "r", "utf-8")
-#     # load matrix
-#     embeddings_index = {}
-#     vocab = []
-#     embeddings_index["<UNK>".decode('utf-8')]= np.zeros(100)
-#     for line in f:
-#         values = line.split()
-#         word = values[0]
-#         vocab.append(word)
-#         coefs = np.asarray(values[1:]).astype(np.float)
-#         embeddings_index[word] = coefs
-#     f.close()
-#
-#     return embeddings_index
-#
-#
-# embeddings_index = get_vocab_and_index()
+
+def get_vocab_and_index(emb_file='data/emb_100_CBOW_wind_5.txt'):
+    f = codecs.open(emb_file, "r", "utf-8")
+    # load matrix
+    embeddings_index = {}
+    vocab = []
+    embeddings_index["<UNK>".decode('utf-8')]= np.zeros(100)
+    for line in tqdm(f):
+        values = line.split()
+        word = values[0]
+        vocab.append(word)
+        coefs = np.asarray(values[1:]).astype(np.float)
+        embeddings_index[word] = coefs
+    f.close()
+
+    return embeddings_index
+
+
+embeddings_index = get_vocab_and_index()
 
 file_lists = os.listdir('data/cnn/questions/training')
-for b in make_batches(len(file_lists),2):
-
-    S,Q,A = get_data('data/cnn/questions/training',file_lists[b[0]:b[1]],
-                        embeddings_index,
-                        max_sent=20,
-                        embedding_size=100,
-                        n_entities=550)
-    print(S.shape,Q.shape,A.shape)
-
+S,Q,A = get_data('data/cnn/questions/training',
+                    file_lists,
+                    embeddings_index,
+                    max_sent=20,
+                    embedding_size=100,
+                    n_entities=550)
+pickle.dump( [S,Q,A] , open( "data/cnn/training_set.p", "wb" ) )
 
 # get_vocab_and_index()
 

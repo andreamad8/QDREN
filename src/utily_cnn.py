@@ -13,12 +13,13 @@ import re
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
+import cPickle as pickle
 
 class Dataset():
     def __init__(self, data='data/cnn/questions/'):
         self.emb = self.get_vocab_and_index(emb_file='data/emb_100_CBOW_wind_5.txt')
         self._data = self.get_train_test(data,max_sent=20,n_entities=550)
-        self.len_train = len(self._data['train'])
+        self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
@@ -50,14 +51,18 @@ class Dataset():
         return self.make_batches(self.len_train, batch_size)
 
     def get_dic_train(self,S_input,Q_input,A_input,k,t):
-        S,Q,A = self.get_data('data/cnn/questions/training',
-                            self._data['train'][k:t],
-                            max_sent=20,
-                            embedding_size=100,
-                            n_entities=550)
-        return {S_input:S,
-                Q_input:Q,
-                A_input:A}
+        # S,Q,A = self.get_data('data/cnn/questions/training',
+        #                     self._data['train'][k:t],
+        #                     max_sent=20,
+        #                     embedding_size=100,
+        #                     n_entities=550)
+        # return {S_input:S,
+        #         Q_input:Q,
+        #         A_input:A}
+
+        return {S_input:self._data['train']['S'][k:t],
+                Q_input:self._data['train']['Q'][k:t],
+                A_input:self._data['train']['A'][k:t]}
 
     def get_dic_val(self,S_input,Q_input,A_input):
         return {S_input:self._data['val']['S'],
@@ -73,6 +78,17 @@ class Dataset():
 
 
     def get_train_test(self,which_task='data/cnn/questions/',max_sent=20,n_entities=550):
+
+
+        # S_train,Q_train,A_train = self.get_data(which_task+'training',
+        #                                          os.listdir('data/cnn/questions/training'),
+        #                                          max_sent=max_sent,
+        #                                          embedding_size=100,
+        #                                          n_entities=n_entities)
+        data_train = pickle.load( open( "data/cnn/training_set.p", "rb" ) )
+        S_train,Q_train,A_train = data_train[0],data_train[1],data_train[2]
+        print("IMPORTING TRAINING DONE")
+
         S_validation,Q_validation,A_validation = self.get_data(which_task+'validation',
                                                  os.listdir('data/cnn/questions/validation'),
                                                  max_sent=max_sent,
@@ -87,7 +103,7 @@ class Dataset():
                             n_entities=n_entities)
         print("IMPORTING TEST DONE")
 
-        return {'train':os.listdir('data/cnn/questions/training'),
+        return {'train':{'S':S_train, 'Q':Q_train, 'A':A_train},
                 'val':{'S':S_validation, 'Q':Q_validation, 'A':A_validation},
                 'test':{'S':S_test, 'Q':Q_test, 'A':A_test},
                 'sent_numb':max_sent}
