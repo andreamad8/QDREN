@@ -43,11 +43,11 @@ def main(arguments):
 
 
     sess = tf.InteractiveSession()
-    batch_size = 1024
+    batch_size = 2
     embedding_size = 100
-    num_blocks = 50
-    epoch =  3000
-    learning_rate = 1e-3
+    num_blocks = 2
+    epoch =  10
+    learning_rate = 1e-2
 
     par={
         "sent_numb":data._data['sent_numb'],
@@ -70,7 +70,6 @@ def main(arguments):
 
 
     sess.run(tf.initialize_all_variables())
-    from tqdm import tqdm
     for step in range(epoch):
         print("Epoch {}".format(step))
         te_loss=0
@@ -97,6 +96,7 @@ def main(arguments):
 
 
 if __name__ == '__main__':
-    arguments = docopt.docopt(__doc__)
-    arguments= {k: int(v) if k!='--learning_rate' else float(v) for k, v in arguments.items()}
-    main(arguments)
+    # arguments = docopt.docopt(__doc__)
+    # arguments= {k: int(v) if k!='--learning_rate' else float(v) for k, v in arguments.items()}
+    # main(arguments)
+    main([])
