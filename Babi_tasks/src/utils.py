@@ -11,12 +11,13 @@ from tqdm import tqdm
 import cPickle as pickle
 
 class Dataset():
-    def __init__(self, data='data/tasks_1-20_v1-2/en/',ts_num=1):
-        self._data = get_train_test(data,ts_num)
+    def __init__(self, data='data/tasks_1-20_v1-2/en/',ts_num=1,embedding_size=100):
+        self._data = get_train_test(data,ts_num,embedding_size)
         self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
+        self.embeddings_size =embedding_size
 
 
 
@@ -60,7 +61,7 @@ class Dataset():
                 A_input:self._data['test']['A']}
 
 
-def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1):
+def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_size=100):
     train, val, test = load_task(which_task,task_num)
     data = train + test + val
 
@@ -83,10 +84,10 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1):
     print("Training sample",len(train))
     print("Validation sample",len(val))
     print("Test sample",len(test))
-    print("vocab_size ",vocab_size)
+    print("Vocab size ",vocab_size)
 
 
-    embeddings_mat = get_emb_matrix(vocab_size,word_idx,embed_size = 50,emb_file='data/glove.6B.50d.txt')
+    embeddings_mat = get_emb_matrix(vocab_size,word_idx,embed_size = embedding_size ,emb_file='data/glove.6B.{}d.txt'.format(embedding_size))
     # embeddings_mat = pickle.load( open( "emb_task1.p", "rb" ) )
     # train/validation/test sets
     S, Q, A = vectorize_data(train, word_idx, sentence_size, max_story_size)

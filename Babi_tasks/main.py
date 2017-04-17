@@ -32,6 +32,7 @@ import docopt
 def main(arguments):
     # config = tf.ConfigProto(log_device_placement=False)
     # config.gpu_options.allow_growth = True
+    print(arguments)
     batch_size = arguments['--batch_size']
     embedding_size = arguments['--embedding_size']
     num_blocks = arguments['--num_blocks']
@@ -39,7 +40,7 @@ def main(arguments):
     task_num =  arguments['--task_num']
     learning_rate = arguments['--learning_rate']
     sample_size = '' if arguments['--sample_size']==1 else '-10k'
-    data= Dataset('data/tasks_1-20_v1-2/en-valid{}/'.format(sample_size),task_num)
+    data= Dataset('data/tasks_1-20_v1-2/en-valid{}/'.format(sample_size),task_num,embedding_size)
     par={
         "vocab_size":data._data["vocab_size"],
         "sent_len":data._data['sent_len'],
