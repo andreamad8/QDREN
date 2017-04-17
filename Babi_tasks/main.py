@@ -5,8 +5,8 @@ Usage:
 
 Options:
     -h --help              Show this screen.
-    --batch_size=<kN>      batch_size [default: 32].
-    --embedding_size=<kN>  embedding_size [default: 100].
+    --batch_size=<kN>      batch_size [default: 900].
+    --embedding_size=<kN>  embedding_size [default: 50].
     --num_blocks=<kN>      num_blocks [default: 20].
     --epoch=<kN>           epoch  [default: 200].
     --task_num=<kN>        task_num   [default: 1].
@@ -50,7 +50,7 @@ def main(arguments):
         "learning_rate": learning_rate,
         "clip_gradients":40.0,
         "opt":"Adam",
-        "debug":True
+        "debug":False
         }
 
     #### MODEL
