@@ -51,7 +51,7 @@ def main(arguments):
         "learning_rate": learning_rate,
         "clip_gradients":40.0,
         "opt":"Adam",
-        "debug":True
+        "debug":False
         }
 
     #### MODEL
@@ -60,9 +60,9 @@ def main(arguments):
 
     sess = tf.InteractiveSession()
 
-    merged = tf.summary.merge_all()
-    summary_writer_train = tf.summary.FileWriter('logs/train/task_{}{}'.format(str(task_num),sample_size), sess.graph)
-    summary_writer_val = tf.summary.FileWriter('logs/val/task_{}{}'.format(str(task_num),sample_size))
+    # merged = tf.summary.merge_all()
+    # summary_writer_train = tf.summary.FileWriter('logs/train/task_{}{}'.format(str(task_num),sample_size), sess.graph)
+    # summary_writer_val = tf.summary.FileWriter('logs/val/task_{}{}'.format(str(task_num),sample_size))
 
 
     sess.run(tf.global_variables_initializer())
@@ -70,24 +70,24 @@ def main(arguments):
         te_loss=0
         for i, elem in enumerate(data.get_batch_train(batch_size)):
             dic = data.get_dic_train(S_input,Q_input,A_input,elem[0],elem[1])
-            summary,_, loss_train, acc_train = sess.run([merged,train_op, loss, accuracy], feed_dict=dic)
-            summary_writer_train.add_summary(summary,step*(data.num_batches)+i)
+            _, loss_train, acc_train = sess.run([train_op, loss, accuracy], feed_dict=dic)
+            # summary_writer_train.add_summary(summary,step*(data.num_batches)+i)
             te_loss+=loss_train
         loss_batch=te_loss/ data.len_train
 
 
         if step % 10 == 0:
             dic = data.get_dic_val(S_input,Q_input,A_input)
-            su,loss_val, acc_val,pred = sess.run([merged,loss, accuracy, prediction], feed_dict=dic)
-            summary_writer_val.add_summary(su,step*data.num_batches)
+            loss_val, acc_val,pred = sess.run([loss, accuracy, prediction], feed_dict=dic)
+            # summary_writer_val.add_summary(su,step*data.num_batches)
             print ('Step {}: loss_train = {:.2f}, acc_train = {:.2f} loss_val = {:.2f}, acc_val = {:.2f}'.format(step, loss_batch, acc_train,loss_val/ data.len_val, acc_val))
 
 
     dic = data.get_dic_test(S_input,Q_input,A_input)
     loss_test, acc_test = sess.run([loss, accuracy], feed_dict=dic)
     print ('loss_test = {:.2f}, acc_test = {:.2f}'.format(loss_test/ data.len_test, acc_test))
-    summary_writer_train.close()
-    summary_writer_val.close()
+    # summary_writer_train.close()
+    # summary_writer_val.close()
 
 
 
