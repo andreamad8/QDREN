@@ -11,13 +11,12 @@ from tqdm import tqdm
 import pickle
 
 class Dataset():
-    def __init__(self, data='data/tasks_1-20_v1-2/en/',ts_num=1,embedding_size=100):
-        self._data = get_train_test(data,ts_num,embedding_size)
+    def __init__(self, data='data/tasks_1-20_v1-2/en/',ts_num=1):
+        self._data = get_train_test(data,ts_num)
         self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
-        self.embeddings_size =embedding_size
 
 
 
@@ -61,7 +60,7 @@ class Dataset():
                 A_input:self._data['test']['A']}
 
 
-def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_size=100):
+def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1):
     train, val, test = load_task(which_task,task_num)
     data = train + test + val
 
@@ -72,7 +71,10 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_si
     mean_story_size = int(np.mean([ len(s) for s, _, _ in data ]))
     sentence_size = max(map(len, chain.from_iterable(s for s, _, _ in data)))
     query_size = max(map(len, (q for _, q, _ in data)))
-    max_story_size = max_story_size #min(50, max_story_size)
+    if (task_num==3):
+        max_story_size = min(130, max_story_size)
+    else:
+        max_story_size = min(70, max_story_size)
 
 
     vocab_size = len(word_idx) +1# +1 for nil word
@@ -88,7 +90,7 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_si
 
 
     # embeddings_mat = get_emb_matrix(vocab_size,word_idx,embed_size = embedding_size ,emb_file='data/glove.6B.{}d.txt'.format(embedding_size))
-    embeddings_mat = pickle.load( open( "emb_task1.p", "rb" ) )
+    # embeddings_mat = pickle.load( open( "emb_task1.p", "rb" ) )
     # train/validation/test sets
     S, Q, A = vectorize_data(train, word_idx, sentence_size, max_story_size)
     valS, valQ, valA = vectorize_data(val, word_idx, sentence_size, max_story_size)
@@ -101,7 +103,6 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_si
             'sent_len':sentence_size,
             'sent_numb':max_story_size,
             'word_idx':word_idx,
-            'embeddings_mat':embeddings_mat,
             'len_training':len(train)}
 
 def load_task(data_dir, task_id, only_supporting=False):
@@ -259,8 +260,8 @@ def get_emb_matrix(vocab_size,word_idx,embed_size = 100,emb_file='data/glove.6B.
         else:
             print('Missing from QAEMB: {}'.format(word))
 
-    print('Total number of null word embeddings:')
-    print(np.sum(np.sum(embedding_matrix, axis=1) == 0))
+    # print('Total number of null word embeddings:')
+    # print(np.sum(np.sum(embedding_matrix, axis=1) == 0))
     return embedding_matrix
 
 

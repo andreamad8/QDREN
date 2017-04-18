@@ -7,7 +7,7 @@ from tflearn.activations import sigmoid, softmax
 class EntityNetwork():
     def __init__(self, vocab_size, sent_len, sent_numb, num_blocks, embedding_size,
                  learning_rate, decay_steps, decay_rate, opt,
-                 embeddings_mat,trainable, no_out,max_norm, clip_gradients=40.0,
+                 trainable, no_out,max_norm, clip_gradients=40.0,embeddings_mat =[],
                  initializer=tf.random_normal_initializer(stddev=0.1)):
         """
         Initialize an Entity Network with the necessary hyperparameters.
