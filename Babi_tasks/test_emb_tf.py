@@ -41,6 +41,7 @@ for word, i in data._data['word_idx'].items():
         if embedding_vector is not None:
             # words not found in embedding index will be all-zeros.
             embedding_matrix[i] = embedding_vector
+            print(i,word)
         else:
             print('Missing from QAEMB: {}'.format(word))
 
