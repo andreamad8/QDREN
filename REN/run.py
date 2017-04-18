@@ -100,7 +100,7 @@ def get_random_parameters(data,epoch):
             d[k] = dists[k][idx]
         else:
             d[k] = dists[k].rvs()
-    if d['no_out']:
+    if d['no_out'] or d['trainable'][2]==1:
         d['num_blocks'] = data._data["vocab_size"]
     return d
 
