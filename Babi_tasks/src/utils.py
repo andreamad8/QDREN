@@ -87,8 +87,8 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1,embedding_si
     print("Vocab size ",vocab_size)
 
 
-    # embeddings_mat = get_emb_matrix(vocab_size,word_idx,embed_size = embedding_size ,emb_file='data/glove.6B.{}d.txt'.format(embedding_size))
-    embeddings_mat = pickle.load( open( "emb_task1.p", "rb" ) )
+    embeddings_mat = get_emb_matrix(vocab_size,word_idx,embed_size = embedding_size ,emb_file='data/glove.6B.{}d.txt'.format(embedding_size))
+    # embeddings_mat = pickle.load( open( "emb_task1.p", "rb" ) )
     # train/validation/test sets
     S, Q, A = vectorize_data(train, word_idx, sentence_size, max_story_size)
     valS, valQ, valA = vectorize_data(val, word_idx, sentence_size, max_story_size)
