@@ -38,11 +38,11 @@ class Dataset():
         return a[p], b[p], c[p]
 
     def get_batch_train(self,batch_size):
-        #randomize = np.arange(self.len_train)
-        #np.random.shuffle(randomize)
-        #self._data['train']['S'] = self._data['train']['S'][randomize]
-        #self._data['train']['Q'] = self._data['train']['Q'][randomize]
-        #self._data['train']['A'] = self._data['train']['A'][randomize]
+        randomize = np.arange(self.len_train)
+        np.random.shuffle(randomize)
+        self._data['train']['S'] = self._data['train']['S'][randomize]
+        self._data['train']['Q'] = self._data['train']['Q'][randomize]
+        self._data['train']['A'] = self._data['train']['A'][randomize]
         return self.make_batches(self.len_train, batch_size)
 
     def get_dic_train(self,S_input,Q_input,A_input,i,j):
