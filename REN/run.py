@@ -108,11 +108,9 @@ def get_random_parameters(data,epoch):
 def main(task_num,sample_size=''):
     batch_size = 32
     epoch = 200
-
-    task_num = 1
     if not os.path.exists('data/ris/task_{}'.format(task_num)):
         os.makedirs('data/ris/task_{}'.format(task_num))
-    data = Dataset('data/tasks_1-20_v1-2/en-valid{}/'.format(sample_size),task_num)
+    data = Dataset('data/tasks_1-20_v1-2/en-valid{}/'.format(sample_size),int(task_num))
 
 
     for i in range(10):
