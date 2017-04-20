@@ -7,12 +7,13 @@ from collections import Counter
 from iteration_utilities import flatten
 
 class Dataset():
-    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size):
+    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,dr):
         self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size)
         self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
+        self.dr = dr
 
 
 
@@ -40,20 +41,23 @@ class Dataset():
         # self._data['train']['A'] = self._data['train']['A'][randomize]
         return self.make_batches(self.len_train, batch_size)
 
-    def get_dic_train(self,S_input,Q_input,A_input,i,j):
+    def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j):
         return {S_input:self._data['train']['S'][i:j],
                 Q_input:self._data['train']['Q'][i:j],
-                A_input:self._data['train']['A'][i:j]}
+                A_input:self._data['train']['A'][i:j],
+                keep_prob:self.dr}
 
-    def get_dic_val(self,S_input,Q_input,A_input):
+    def get_dic_val(self,S_input,Q_input,A_input,keep_prob):
         return {S_input:self._data['val']['S'],
                 Q_input:self._data['val']['Q'],
-                A_input:self._data['val']['A']}
+                A_input:self._data['val']['A'],
+                keep_prob:1.0}
 
-    def get_dic_test(self,S_input,Q_input,A_input):
+    def get_dic_test(self,S_input,Q_input,A_input,keep_prob):
         return {S_input:self._data['test']['S'],
                 Q_input:self._data['test']['Q'],
-                A_input:self._data['test']['A']}
+                A_input:self._data['test']['A'],
+                keep_prob:1.0}
 
 
 def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size):
@@ -229,7 +233,7 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
             in_x2.append(q_words)
             in_l[idx, [entity_dict[w] for w in flatten(d_sents) if w in entity_dict]] = 1.0
             in_y.append(entity_dict[a] if a in entity_dict else 0)
-        if verbose and (idx % 100 == 0):
+        if verbose and (idx % 100000 == 0):
             logging.info('Vectorization: processed %d / %d' % (idx, len(examples[0])))
 
     # def len_argsort(seq):

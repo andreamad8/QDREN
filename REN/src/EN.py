@@ -26,6 +26,8 @@ class EntityNetwork():
         self.S = tf.placeholder(tf.int32, shape=[None,self.sent_numb,self.sent_len],name="Story")
         self.Q = tf.placeholder(tf.int32, shape=[None,1,self.sent_len],        name="Question")
         self.A = tf.placeholder(tf.int64, shape=[None],        name="Answer")
+        self.keep_prob = tf.placeholder(tf.float32, name= "dropout")
+
         self.batch_size = tf.shape(self.S)[0]
 
         # Setup Global, Epoch Step
@@ -97,6 +99,7 @@ class EntityNetwork():
 
         # Story Input Encoder
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm)             # Shape: [None, story_len, sent_len, embed_sz]
+        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)     # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])          # Shape: [None, story_len, embed_sz]
 
