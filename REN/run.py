@@ -123,6 +123,8 @@ def main(task_num,sample_size=''):
         train_loss, train_acc, val_loss, val_acc,test_loss, test_acc = train(epoch,batch_size, data, par)
         par['id'] = 'Par'+ str(i)
         par['acc'] = sorted([[k,v] for k,v in val_acc.items()])[-1][1]
+        if 'embeddings_mat' in par.keys():
+            par['embeddings_mat']=''
         pickle.dump( [train_loss, train_acc, val_loss, val_acc,test_loss, test_acc,par], open( 'data/ris/task_{}/{}.p'.format(task_num,par['id']), "wb" ) )
 
 

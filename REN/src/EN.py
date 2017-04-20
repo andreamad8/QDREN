@@ -6,7 +6,7 @@ from tflearn.activations import sigmoid, softmax
 
 class EntityNetwork():
     def __init__(self, vocab_size, sent_len, sent_numb, num_blocks, embedding_size,
-                 learning_rate, decay_steps, decay_rate, opt,
+                 learning_rate, decay_steps, decay_rate, opt, label_num,
                  trainable, no_out,max_norm, clip_gradients=40.0,embeddings_mat =[],
                  initializer=tf.random_normal_initializer(stddev=0.1)):
         """
@@ -21,6 +21,7 @@ class EntityNetwork():
         self.opt, self.embeddings_mat, self.trainable = opt, embeddings_mat, trainable
         self.clip_gradients, self.no_out, self.max_norm = clip_gradients, no_out,max_norm
         self.learning_rate ,self.decay_steps, self.decay_rate= learning_rate,decay_steps,decay_rate
+        self.label_num = label_num
         ## setup placeholder
         self.S = tf.placeholder(tf.int32, shape=[None,self.sent_numb,self.sent_len],name="Story")
         self.Q = tf.placeholder(tf.int32, shape=[None,1,self.sent_len],        name="Question")
@@ -57,6 +58,7 @@ class EntityNetwork():
         """
         ## use pretrained emb
         if (self.trainable[0]):
+            # E = tf.get_variable('word_emb',self.embeddings_mat)
             E = tf.get_variable('word_emb',[self.vocab_size, self.embedding_size],
                         initializer=tf.constant_initializer(np.array(self.embeddings_mat)),
                         trainable=self.trainable[1])
@@ -84,7 +86,7 @@ class EntityNetwork():
         if (not self.no_out):
             # Output Module Variables
             self.H = tf.get_variable("H", [self.embedding_size, self.embedding_size], initializer=self.init)
-            self.R = tf.get_variable("R", [self.embedding_size, self.vocab_size], initializer=self.init)
+            self.R = tf.get_variable("R", [self.embedding_size, self.label_num], initializer=self.init)
 
 
     def inference(self):
@@ -147,10 +149,10 @@ class EntityNetwork():
         """
         Build Optimizer Training Operation.
         """
-        learning_rate = tf.train.exponential_decay(self.learning_rate, self.global_step, self.decay_steps,
-                                                   self.decay_rate, staircase=True)
+        # learning_rate = tf.train.exponential_decay(self.learning_rate, self.global_step, self.decay_steps,
+        #                                            self.decay_rate, staircase=True)
 
         train_op = tf.contrib.layers.optimize_loss(self.loss_val, global_step=self.global_step,
-                                                   learning_rate=learning_rate, optimizer=self.opt,
+                                                   learning_rate=self.learning_rate, optimizer=self.opt,
                                                    clip_gradients=self.clip_gradients)
         return train_op
