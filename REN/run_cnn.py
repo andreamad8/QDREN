@@ -67,7 +67,7 @@ def train(epoch,batch_size, data,par,test_num):
                 dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
                 val_loss_val, val_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
                 logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val))
-                send_email("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val))
+                send_email("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val),'EX %s'%test_num)
                 # Add val loss, val acc to data
                 val_loss[e], val_acc[e] = val_loss_val, val_acc_val
 
