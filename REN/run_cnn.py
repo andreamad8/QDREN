@@ -54,7 +54,7 @@ def train(epoch,batch_size, data,par,test_num):
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
-                if counter % 100 == 0:
+                if counter % 10 == 0:
                     logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
             # Add train loss, train acc to data
             train_loss[e], train_acc[e] = loss / float(counter), acc / float(counter)
@@ -94,19 +94,19 @@ def train(epoch,batch_size, data,par,test_num):
 
 
 def main():
-    embedding_size = 50
-    sent_len = 10
-    sent_numb = 20
-    batch_size = 32
+    embedding_size = 100
+    sent_len = 50
+    sent_numb = 50
+    batch_size = 1024
     epoch = 200
-    dr = 0.5
-    data = Dataset(train_size=1000,dev_size=10,test_size=10,sent_len=sent_len,
+    dr = 0.2
+    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size, dr= dr)
 
     par = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 20,
+    num_blocks = 40,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
@@ -117,12 +117,12 @@ def main():
     trainable = [1,1,0,0],
     max_norm = None,
     no_out = False,
-    decay_steps = 0, #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
+    decay_steps = 20, #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
     decay_rate = 0.5
     )
 
 
-    train(epoch,batch_size, data,par,test_num=1)
+    train(epoch,batch_size, data,par,test_num=3)
 
 
 if __name__ == '__main__':

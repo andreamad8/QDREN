@@ -246,7 +246,7 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
     #     in_x2 = [in_x2[i] for i in sorted_index]
     #     in_l = in_l[sorted_index]
     #     in_y = [in_y[i] for i in sorted_index]
-    #
+
     return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), in_l, np.array(in_y)
 
 
