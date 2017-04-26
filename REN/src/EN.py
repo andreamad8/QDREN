@@ -142,7 +142,7 @@ class EntityNetwork():
 
             # Output Transformations => Logits
 
-            hidden = prelu(tf.matmul(u, self.H) + tf.squeeze(query_embedding))                # Shape: [None, embed_sz]
+            hidden = tf.sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))                # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 
@@ -150,12 +150,13 @@ class EntityNetwork():
         """
         Build loss computation - softmax cross-entropy between logits, and correct answer.
         """
-        # for v in var:
-        #     print(v.name)
         if(self.L2 !=0):
             var = tf.trainable_variables()
-            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'Embedding' not in v.name ])  * self.L2
-        return tf.losses.sparse_softmax_cross_entropy(self.A, self.logits) + lossL2
+            # for v in var:
+            #     print(type(v.name))
+        lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'Embedding:0' != v.name ])  * self.L2
+        return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2 #+ lossL2#tf.divide(lossL2,tf.to_float(self.batch_size))
+        # tf.losses.sparse_softmax_cross_entropy
 
     def train(self):
         """

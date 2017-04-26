@@ -94,22 +94,54 @@ def train(epoch,batch_size, data,par,test_num):
         logging.info("Test Loss: %.3f\tTest Accuracy: %.3f" % (test_loss, test_acc))
         return train_loss, train_acc, val_loss, val_acc,test_loss, test_acc
 
+def get_random_parameters(data,epoch):
+    """
+    create a random configuration from using dists to select random parameters
+    :return: neural network parameters for create_model
+    """
 
+    # change this dictionary to change the random distribution
+    dists = dict(
+        vocab_size = [data._data["vocab_size"]],
+        sent_len = [data._data['sent_len']],
+        sent_numb = [data._data['sent_numb']],
+        num_blocks = [data._data["vocab_size"],20,],
+        embedding_size =  [50,100],
+        learning_rate=  [0.01,0.001,0.0001],
+        clip_gradients= [40.0],
+        opt=  ['Adam'], #RMSProp
+        trainable=  [[0,0,0,0],[1,0,1,0],[1,1,1,1],[1,0,1,1],[1,0,0,0]],
+        max_norm=  [None,1],
+        no_out=  [True,False],
+        decay_steps=  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
+        decay_rate=  [0.1,0.5],
+    )
+
+    d = {}
+    for k in dists:
+        if hasattr(dists[k], '__len__'):
+            idx = random.randint(0, len(dists[k]) - 1)
+            d[k] = dists[k][idx]
+        else:
+            d[k] = dists[k].rvs()
+    if d['no_out'] or d['trainable'][2]==1:
+        d['num_blocks'] = data._data["vocab_size"]
+    return d
 
 def main():
     embedding_size = 100
     sent_len = 2
     sent_numb = 4
-    batch_size = 32
+    batch_size = 1
     epoch = 10
     dr = 0.5
-    data = Dataset(train_size=100,dev_size=1,test_size=1,sent_len=sent_len,
+    data = Dataset(train_size=100,dev_size=100,test_size=100,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size, dr= dr)
 
     par = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = data._data["label_num"],
+    num_blocks = 10,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
@@ -119,14 +151,14 @@ def main():
     opt = 'Adam', # 'RMSProp', 'SGD'
     trainable = [1,1,0,0],
     max_norm = None,
-    no_out = True,
+    no_out = False,
     decay_steps = 20, #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
     decay_rate = 0.5,
     L2 = 0.1
     )
 
 
-    train(epoch,batch_size, data,par,test_num=1)
+    train(epoch,batch_size, data,par,test_num=11)
 
 
 if __name__ == '__main__':

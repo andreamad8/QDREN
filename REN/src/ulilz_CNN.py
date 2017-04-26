@@ -241,8 +241,8 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
             in_y.append(entity_dict[a] if a in entity_dict else 0)
         if verbose and (idx % 100000 == 0):
             logging.info('Vectorization: processed %d / %d' % (idx, len(examples[0])))
-    logging.info('Max sent:{}\t Avg sent: {}'.format(max(stat_len),sum(stat_len)/len(stat_len)))
-    logging.info('Max wxse:{}\t Avg wxse: {}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent)))
+    logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
+    logging.info('Max wxse:{}\t Avg wxse: {} Std wxse:{}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent),np.std(stat_wordxsent)))
 
     # def len_argsort(seq):
     #     return sorted(range(len(seq)), key=lambda x: len(seq[x]))
