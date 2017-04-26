@@ -18,7 +18,7 @@ import cPickle as pickle
 import logging
 from data.email_util import send_email
 
-def train(epoch,batch_size, data,par,test_num):
+def train(epoch,batch_size, data,par,test_num,dr):
     # Setup Checkpoint + Log Paths
     ckpt_dir = "checkpoints/CNN{}/".format(test_num)
     if not os.path.exists(ckpt_dir):
@@ -51,7 +51,7 @@ def train(epoch,batch_size, data,par,test_num):
         for e in range(curr_epoch,epoch):
             loss, acc, counter = 0.0, 0.0, 0
             for i, elem in enumerate(data.get_batch_train(batch_size)):
-                dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1])
+                dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
@@ -68,54 +68,58 @@ def train(epoch,batch_size, data,par,test_num):
                 dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
                 val_loss_val, val_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
                 logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val))
-                send_email("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val),'EX %s'%test_num)
                 # Add val loss, val acc to data
                 val_loss[e], val_acc[e] = val_loss_val, val_acc_val
 
                 # Update best_val
                 if val_acc[e] >= best_val:
                     best_val = val_acc[e]
+                    # send_email("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val),'EX %s'%test_num)
                 else:
                     patient += 1
 
-                # Save Model
-                saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step)
+                if(e%5 ==0):
+                    # Save Model
+                    saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step)
                 with open(ckpt_dir + "training_logs.pik", 'w') as f:
                     pickle.dump((train_loss, train_acc, val_loss, val_acc), f)
 
             # Early Stopping Condition
             if patient > 2:
                 break
-        # Test Loop
-        dic = data.get_dic_test(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
-        test_loss, test_acc = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
+        # # Test Loop
+        # dic = data.get_dic_test(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
+        # test_loss, test_acc = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
+        #
+        # # Print and Write Test Loss/Accuracy
+        # logging.info("Test Loss: %.3f\tTest Accuracy: %.3f" % (test_loss, test_acc))
+        return train_loss, train_acc, val_loss, val_acc
 
-        # Print and Write Test Loss/Accuracy
-        logging.info("Test Loss: %.3f\tTest Accuracy: %.3f" % (test_loss, test_acc))
-        return train_loss, train_acc, val_loss, val_acc,test_loss, test_acc
-
-def get_random_parameters(data,epoch):
+def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     """
     create a random configuration from using dists to select random parameters
     :return: neural network parameters for create_model
     """
 
-    # change this dictionary to change the random distribution
     dists = dict(
-        vocab_size = [data._data["vocab_size"]],
-        sent_len = [data._data['sent_len']],
-        sent_numb = [data._data['sent_numb']],
-        num_blocks = [data._data["vocab_size"],20,],
-        embedding_size =  [50,100],
-        learning_rate=  [0.01,0.001,0.0001],
-        clip_gradients= [40.0],
-        opt=  ['Adam'], #RMSProp
-        trainable=  [[0,0,0,0],[1,0,1,0],[1,1,1,1],[1,0,1,1],[1,0,0,0]],
-        max_norm=  [None,1],
-        no_out=  [True,False],
-        decay_steps=  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
-        decay_rate=  [0.1,0.5],
+    vocab_size = [data._data["vocab_size"]],
+    label_num = [data._data["label_num"]],
+    num_blocks = [5,10,20,50],
+    sent_len = [sent_len],
+    sent_numb = [sent_numb],
+    embedding_size = [embedding_size],
+    embeddings_mat = [data._data["embeddings_mat"]],
+    learning_rate=  [0.1,0.01,0.001,0.0001],
+    clip_gradients= [1.0,10.0,40.0],
+    opt = ['Adam','RMSProp', 'SGD'],
+    trainable = [[1,1,0,0],[1,0,0,0],[0,0,0,0]],
+    max_norm = [None,None,None,None,1],
+    no_out = [False],
+    decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
+    decay_rate = [0],
+    L2 = [0.01,0.001,0.0001]
     )
+
 
     d = {}
     for k in dists:
@@ -124,41 +128,32 @@ def get_random_parameters(data,epoch):
             d[k] = dists[k][idx]
         else:
             d[k] = dists[k].rvs()
-    if d['no_out'] or d['trainable'][2]==1:
-        d['num_blocks'] = data._data["vocab_size"]
     return d
 
 def main():
     embedding_size = 100
-    sent_len = 2
-    sent_numb = 4
-    batch_size = 1
-    epoch = 10
-    dr = 0.5
-    data = Dataset(train_size=100,dev_size=100,test_size=100,sent_len=sent_len,
-                    sent_numb=sent_numb, embedding_size=embedding_size, dr= dr)
+    epoch = 100
+    sent_len = 50
+    sent_numb = 70
+    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
+                    sent_numb=sent_numb, embedding_size=embedding_size)
 
-    par = dict(
-    vocab_size = data._data["vocab_size"],
-    label_num = data._data["label_num"],
-    num_blocks = 10,
-    sent_len = sent_len,
-    sent_numb = sent_numb,
-    embedding_size = embedding_size,
-    embeddings_mat = data._data["embeddings_mat"],
-    learning_rate=  0.001,
-    clip_gradients= 40.0,
-    opt = 'Adam', # 'RMSProp', 'SGD'
-    trainable = [1,1,0,0],
-    max_norm = None,
-    no_out = False,
-    decay_steps = 20, #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
-    decay_rate = 0.5,
-    L2 = 0.1
-    )
-
-
-    train(epoch,batch_size, data,par,test_num=11)
+    batch_size_arr = [512,1024]
+    dr_arr = [0.2,0.5,0.7]
+    best_accuracy = 0.0
+    for exp in range(100):
+        batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
+        dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
+        par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+        train_loss, train_acc, val_loss, val_acc= train(epoch,batch_size, data,par,test_num=exp,dr=dr)
+        par['id'] = 'Par'+ str(exp)
+        par['acc'] = sorted([[k,v] for k,v in val_acc.items()])[-1][1]
+        par['embeddings_mat']=''
+        par['batch_size']= batch_size
+        par['dr']= dr
+        if (par['acc']>=best_accuracy):
+            best_accuracy =par['acc']
+            send_email("Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'EX %s'%exp)
 
 
 if __name__ == '__main__':

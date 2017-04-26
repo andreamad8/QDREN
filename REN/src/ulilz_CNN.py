@@ -7,13 +7,12 @@ from collections import Counter
 from iteration_utilities import flatten
 
 class Dataset():
-    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,dr):
+    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size):
         self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size)
         self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
-        self.dr = dr
 
 
 
@@ -41,11 +40,11 @@ class Dataset():
         self._data['train']['A'] = self._data['train']['A'][randomize]
         return self.make_batches(self.len_train, batch_size)
 
-    def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j):
+    def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j,dr):
         return {S_input:self._data['train']['S'][i:j],
                 Q_input:self._data['train']['Q'][i:j],
                 A_input:self._data['train']['A'][i:j],
-                keep_prob:self.dr}
+                keep_prob:dr}
 
     def get_dic_val(self,S_input,Q_input,A_input,keep_prob):
         return {S_input:self._data['val']['S'],
@@ -204,14 +203,14 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
     in_l = np.zeros((len(examples[0]), len(entity_dict)))
     in_y = []
 
-    stat_len =[]
-    stat_wordxsent = []
+    # stat_len =[]
+    # stat_wordxsent = []
     for idx, (d, q, a) in enumerate(zip(examples[0], examples[1], examples[2])):
         d_sents = d.split(' . ')
         for i,s in enumerate(d_sents):
             d_sents[i]= s.split(' ')
-        stat_len.append(len(d_sents))
-        stat_wordxsent.append(max([len(s)for s in d_sents]))
+        # stat_len.append(len(d_sents))
+        # stat_wordxsent.append(max([len(s)for s in d_sents]))
         # d_words = d.split(' ')
         q_words = q.split(' ')
         assert (a in flatten(d_sents))
@@ -241,8 +240,8 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
             in_y.append(entity_dict[a] if a in entity_dict else 0)
         if verbose and (idx % 100000 == 0):
             logging.info('Vectorization: processed %d / %d' % (idx, len(examples[0])))
-    logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
-    logging.info('Max wxse:{}\t Avg wxse: {} Std wxse:{}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent),np.std(stat_wordxsent)))
+    # logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
+    # logging.info('Max wxse:{}\t Avg wxse: {} Std wxse:{}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent),np.std(stat_wordxsent)))
 
     # def len_argsort(seq):
     #     return sorted(range(len(seq)), key=lambda x: len(seq[x]))
