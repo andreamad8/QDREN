@@ -46,7 +46,8 @@ def train(epoch,batch_size, data,par,test_num):
         curr_epoch = sess.run(entity_net.epoch_step)
 
         logging.info('Training stated')
-        best_val=0.0
+        best_val= 0.0
+        patient = 0
         for e in range(curr_epoch,epoch):
             loss, acc, counter = 0.0, 0.0, 0
             for i, elem in enumerate(data.get_batch_train(batch_size)):
@@ -54,7 +55,7 @@ def train(epoch,batch_size, data,par,test_num):
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
-                if counter % 10 == 0:
+                if counter % 1 == 0:
                     logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
             # Add train loss, train acc to data
             train_loss[e], train_acc[e] = loss / float(counter), acc / float(counter)
@@ -72,17 +73,19 @@ def train(epoch,batch_size, data,par,test_num):
                 val_loss[e], val_acc[e] = val_loss_val, val_acc_val
 
                 # Update best_val
-                if val_acc[e] > best_val:
+                if val_acc[e] >= best_val:
                     best_val = val_acc[e]
+                else:
+                    patient += 1
 
                 # Save Model
                 saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step)
                 with open(ckpt_dir + "training_logs.pik", 'w') as f:
                     pickle.dump((train_loss, train_acc, val_loss, val_acc), f)
 
-                # Early Stopping Condition
-                if best_val > 0.95:
-                    break
+            # Early Stopping Condition
+            if patient > 2:
+                break
         # Test Loop
         dic = data.get_dic_test(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
         test_loss, test_acc = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
@@ -95,34 +98,35 @@ def train(epoch,batch_size, data,par,test_num):
 
 def main():
     embedding_size = 100
-    sent_len = 50
-    sent_numb = 50
-    batch_size = 1024
-    epoch = 200
-    dr = 0.2
-    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
+    sent_len = 2
+    sent_numb = 4
+    batch_size = 32
+    epoch = 10
+    dr = 0.5
+    data = Dataset(train_size=100,dev_size=1,test_size=1,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size, dr= dr)
 
     par = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 40,
+    num_blocks = data._data["label_num"],
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"],
     learning_rate=  0.001,
     clip_gradients= 40.0,
-    opt = 'Adam', #RMSProp,
+    opt = 'Adam', # 'RMSProp', 'SGD'
     trainable = [1,1,0,0],
     max_norm = None,
-    no_out = False,
+    no_out = True,
     decay_steps = 20, #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
-    decay_rate = 0.5
+    decay_rate = 0.5,
+    L2 = 0.1
     )
 
 
-    train(epoch,batch_size, data,par,test_num=3)
+    train(epoch,batch_size, data,par,test_num=1)
 
 
 if __name__ == '__main__':

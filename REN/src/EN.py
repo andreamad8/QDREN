@@ -1,12 +1,16 @@
 from __future__ import print_function
-from DMC import DynamicMemoryCell
+from DMC import DynamicMemoryCell,prelu_func
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
+import functools
+
+
+prelu = functools.partial(prelu_func, initializer=tf.constant_initializer(1.0))
 
 class EntityNetwork():
     def __init__(self, vocab_size, sent_len, sent_numb, num_blocks, embedding_size,
-                 learning_rate, decay_steps, decay_rate, opt, label_num,
+                 learning_rate, decay_steps, decay_rate, opt, label_num,L2,
                  trainable, no_out,max_norm, clip_gradients=40.0,embeddings_mat =[],
                  initializer=tf.random_normal_initializer(stddev=0.1)):
         """
@@ -21,7 +25,7 @@ class EntityNetwork():
         self.opt, self.embeddings_mat, self.trainable = opt, embeddings_mat, trainable
         self.clip_gradients, self.no_out, self.max_norm = clip_gradients, no_out,max_norm
         self.learning_rate ,self.decay_steps, self.decay_rate= learning_rate,decay_steps,decay_rate
-        self.label_num = label_num
+        self.label_num,  self.L2 = label_num, L2
         ## setup placeholder
         self.S = tf.placeholder(tf.int32, shape=[None,self.sent_numb,self.sent_len],name="Story")
         self.Q = tf.placeholder(tf.int32, shape=[None,1,self.sent_len],        name="Question")
@@ -61,7 +65,7 @@ class EntityNetwork():
         ## use pretrained emb
         if (self.trainable[0]):
             # E = tf.get_variable('word_emb',self.embeddings_mat)
-            E = tf.get_variable('word_emb',[self.vocab_size, self.embedding_size],
+            E = tf.get_variable('Embedding',[self.vocab_size, self.embedding_size],
                         initializer=tf.constant_initializer(np.array(self.embeddings_mat)),
                         trainable=self.trainable[1])
         else:
@@ -138,7 +142,7 @@ class EntityNetwork():
 
             # Output Transformations => Logits
 
-            hidden = tf.nn.relu(tf.matmul(u, self.H) + tf.squeeze(query_embedding))                # Shape: [None, embed_sz]
+            hidden = prelu(tf.matmul(u, self.H) + tf.squeeze(query_embedding))                # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 
@@ -146,7 +150,12 @@ class EntityNetwork():
         """
         Build loss computation - softmax cross-entropy between logits, and correct answer.
         """
-        return tf.losses.sparse_softmax_cross_entropy(self.A, self.logits)
+        # for v in var:
+        #     print(v.name)
+        if(self.L2 !=0):
+            var = tf.trainable_variables()
+            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'Embedding' not in v.name ])  * self.L2
+        return tf.losses.sparse_softmax_cross_entropy(self.A, self.logits) + lossL2
 
     def train(self):
         """

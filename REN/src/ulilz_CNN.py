@@ -34,11 +34,11 @@ class Dataset():
         return a[p], b[p], c[p]
 
     def get_batch_train(self,batch_size):
-        # randomize = np.arange(self.len_train)
-        # np.random.shuffle(randomize)
-        # self._data['train']['S'] = self._data['train']['S'][randomize]
-        # self._data['train']['Q'] = self._data['train']['Q'][randomize]
-        # self._data['train']['A'] = self._data['train']['A'][randomize]
+        randomize = np.arange(self.len_train)
+        np.random.shuffle(randomize)
+        self._data['train']['S'] = self._data['train']['S'][randomize]
+        self._data['train']['Q'] = self._data['train']['Q'][randomize]
+        self._data['train']['A'] = self._data['train']['A'][randomize]
         return self.make_batches(self.len_train, batch_size)
 
     def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j):
@@ -154,10 +154,11 @@ def load_data(in_file, max_example=None, relabeling=True):
             question = ' '.join(q_words)
             document = ' '.join(d_words)
 
-        questions.append(question)
-        answers.append(answer)
-        documents.append(document)
-        num_examples += 1
+        if (entity_id <=50):
+            questions.append(question)
+            answers.append(answer)
+            documents.append(document)
+            num_examples += 1
 
         f.readline()
         if (max_example is not None) and (num_examples >= max_example):
@@ -202,10 +203,15 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
     in_x2 = []
     in_l = np.zeros((len(examples[0]), len(entity_dict)))
     in_y = []
+
+    stat_len =[]
+    stat_wordxsent = []
     for idx, (d, q, a) in enumerate(zip(examples[0], examples[1], examples[2])):
         d_sents = d.split(' . ')
         for i,s in enumerate(d_sents):
             d_sents[i]= s.split(' ')
+        stat_len.append(len(d_sents))
+        stat_wordxsent.append(max([len(s)for s in d_sents]))
         # d_words = d.split(' ')
         q_words = q.split(' ')
         assert (a in flatten(d_sents))
@@ -235,6 +241,8 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
             in_y.append(entity_dict[a] if a in entity_dict else 0)
         if verbose and (idx % 100000 == 0):
             logging.info('Vectorization: processed %d / %d' % (idx, len(examples[0])))
+    logging.info('Max sent:{}\t Avg sent: {}'.format(max(stat_len),sum(stat_len)/len(stat_len)))
+    logging.info('Max wxse:{}\t Avg wxse: {}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent)))
 
     # def len_argsort(seq):
     #     return sorted(range(len(seq)), key=lambda x: len(seq[x]))
