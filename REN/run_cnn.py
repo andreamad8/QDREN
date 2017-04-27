@@ -67,15 +67,17 @@ def train(epoch,batch_size, data,par,test_num,dr):
             if e % 1 == 0:
                 val_loss_val, val_acc_val, counter_val = 0.0, 0.0, 0
                 for i, elem in enumerate(data.get_batch_train(batch_size,'val')):
+                    logging.info(elem)
                     dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1])
                     curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
                     val_loss_val, val_acc_val, counter_val = val_loss_val + curr_loss_val, val_acc_val + curr_acc_val, counter_val + 1
-                logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val / float(counter_val), val_acc_val/float(counter_val)))
+                    logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val / float(counter_val), val_acc_val/float(counter_val)))
                 # Add val loss, val acc to data
                 val_loss[e], val_acc[e] = val_loss_val / float(counter_val), val_acc_val/float(counter_val)
                 # Update best_val
                 if val_acc[e] >= best_val:
                     best_val = val_acc[e]
+                    patient = 0
                     # send_email("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val),'EX %s'%test_num)
                 else:
                     patient += 1
@@ -135,15 +137,15 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 def main():
     embedding_size = 100
     epoch = 100
-    sent_len = 70
-    sent_numb = 50
-    data = Dataset(train_size=100,dev_size=None,test_size=100,sent_len=sent_len,
+    sent_len = 50
+    sent_numb = 30
+    data = Dataset(train_size=10000,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size)
 
-    batch_size_arr = [1024,512,256]
+    batch_size_arr = [256,512,1024,128,64]
     dr_arr = [0.2,0.5,0.7]
     best_accuracy = 0.0
-    for exp in range(1,100):
+    for exp in range(1000,10001):
         batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
         dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
         par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)

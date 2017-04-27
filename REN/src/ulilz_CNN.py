@@ -38,7 +38,7 @@ class Dataset():
         self._data[data]['S'] = self._data[data]['S'][randomize]
         self._data[data]['Q'] = self._data[data]['Q'][randomize]
         self._data[data]['A'] = self._data[data]['A'][randomize]
-        return self.make_batches(self.len_train, batch_size)
+        return self.make_batches(len(self._data[data]['S']), batch_size)
 
     def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j,dr):
         return {S_input:self._data['train']['S'][i:j],

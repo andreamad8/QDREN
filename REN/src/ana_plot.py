@@ -15,8 +15,9 @@ plt.rc('font', family='Times-Roman')
 sns.set_style(style='white')
 color = sns.color_palette("Set2", 10)
 fig = plt.figure(figsize=(13,10))
-for i in range(1,11):
-    data = pickle.load( open('checkpoints/CNN{}/training_logs.pik'.format(i), "rb" ) )
+i=1
+for j in [309,305]:
+    data = pickle.load( open('checkpoints/CNN{}/training_logs.pik'.format(j), "rb" ) )
 
     loss_train = [v for k,v in data[0].items()]
     loss_val = [v for k,v in data[2].items()]
@@ -39,6 +40,7 @@ for i in range(1,11):
     ax4.set_xlim([0,20])
     plt.plot(acc_val,color=color[i-1])
     ax1.legend(loc='lower center', bbox_to_anchor=(0.50, 0.43), bbox_transform=plt.gcf().transFigure)
+    i+=1
 plt.show()
 # data=[]
 # for filename in os.listdir('../data/ris/task_2/'):
