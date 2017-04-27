@@ -33,7 +33,7 @@ class Dataset():
         return a[p], b[p], c[p]
 
     def get_batch_train(self,batch_size,data):
-        randomize = np.arange(self.len_train)
+        randomize = np.arange(len(self._data[data]['S']))
         np.random.shuffle(randomize)
         self._data[data]['S'] = self._data[data]['S'][randomize]
         self._data[data]['Q'] = self._data[data]['Q'][randomize]

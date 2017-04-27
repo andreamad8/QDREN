@@ -137,7 +137,7 @@ def main():
     epoch = 100
     sent_len = 70
     sent_numb = 50
-    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
+    data = Dataset(train_size=100,dev_size=None,test_size=100,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size)
 
     batch_size_arr = [1024,512,256]
