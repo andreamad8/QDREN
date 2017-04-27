@@ -156,8 +156,10 @@ class EntityNetwork():
             #     print(type(v.name))
             # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'Embedding:0' != v.name ])  * self.L2
             lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
+            return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
+        else:
+            tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)
 
-        return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
         # tf.losses.sparse_softmax_cross_entropy
 
     def train(self):
