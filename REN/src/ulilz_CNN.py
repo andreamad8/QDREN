@@ -32,12 +32,12 @@ class Dataset():
         p = np.random.permutation(len(a))
         return a[p], b[p], c[p]
 
-    def get_batch_train(self,batch_size):
+    def get_batch_train(self,batch_size,data):
         randomize = np.arange(self.len_train)
         np.random.shuffle(randomize)
-        self._data['train']['S'] = self._data['train']['S'][randomize]
-        self._data['train']['Q'] = self._data['train']['Q'][randomize]
-        self._data['train']['A'] = self._data['train']['A'][randomize]
+        self._data[data]['S'] = self._data[data]['S'][randomize]
+        self._data[data]['Q'] = self._data[data]['Q'][randomize]
+        self._data[data]['A'] = self._data[data]['A'][randomize]
         return self.make_batches(self.len_train, batch_size)
 
     def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j,dr):
@@ -46,16 +46,16 @@ class Dataset():
                 A_input:self._data['train']['A'][i:j],
                 keep_prob:dr}
 
-    def get_dic_val(self,S_input,Q_input,A_input,keep_prob):
-        return {S_input:self._data['val']['S'],
-                Q_input:self._data['val']['Q'],
-                A_input:self._data['val']['A'],
+    def get_dic_val(self,S_input,Q_input,A_input,keep_prob,i,j):
+        return {S_input:self._data['val']['S'][i:j],
+                Q_input:self._data['val']['Q'][i:j],
+                A_input:self._data['val']['A'][i:j],
                 keep_prob:1.0}
 
-    def get_dic_test(self,S_input,Q_input,A_input,keep_prob):
-        return {S_input:self._data['test']['S'],
-                Q_input:self._data['test']['Q'],
-                A_input:self._data['test']['A'],
+    def get_dic_test(self,S_input,Q_input,A_input,keep_prob,i,j):
+        return {S_input:self._data['test']['S'][i:j],
+                Q_input:self._data['test']['Q'][i:j],
+                A_input:self._data['test']['A'][i:j],
                 keep_prob:1.0}
 
 

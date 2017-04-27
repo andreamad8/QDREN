@@ -50,7 +50,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
         patient = 0
         for e in range(curr_epoch,epoch):
             loss, acc, counter = 0.0, 0.0, 0
-            for i, elem in enumerate(data.get_batch_train(batch_size)):
+            for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
                 dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
@@ -65,12 +65,14 @@ def train(epoch,batch_size, data,par,test_num,dr):
 
 
             if e % 1 == 0:
-                dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
-                val_loss_val, val_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
-                logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val, val_acc_val))
+                val_loss_val, val_acc_val, counter_val = 0.0, 0.0, 0
+                for i, elem in enumerate(data.get_batch_train(batch_size,'val')):
+                    dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1])
+                    curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
+                    val_loss_val, val_acc_val, counter_val = val_loss_val + curr_loss_val, val_acc_val + curr_acc_val, counter_val + 1
+                logging.info("Epoch %d Validation Loss: %.3f\tValidation Accuracy: %.3f" % (e, val_loss_val / float(counter_val), val_acc_val/float(counter_val)))
                 # Add val loss, val acc to data
-                val_loss[e], val_acc[e] = val_loss_val, val_acc_val
-
+                val_loss[e], val_acc[e] = val_loss_val / float(counter_val), val_acc_val/float(counter_val)
                 # Update best_val
                 if val_acc[e] >= best_val:
                     best_val = val_acc[e]
@@ -133,15 +135,15 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 def main():
     embedding_size = 100
     epoch = 100
-    sent_len = 50
-    sent_numb = 70
+    sent_len = 70
+    sent_numb = 50
     data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size)
 
-    batch_size_arr = [512,1024]
+    batch_size_arr = [1024,512,256]
     dr_arr = [0.2,0.5,0.7]
     best_accuracy = 0.0
-    for exp in range(100):
+    for exp in range(1,100):
         batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
         dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
         par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)
