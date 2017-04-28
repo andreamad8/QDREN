@@ -121,7 +121,7 @@
         no_out = [False],
         decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
         decay_rate = [0],
-        L2 = [0,0.01,0.001,0.0001,0.00001]
+        L2 = [0],#,0.01,0.001,0.0001,0.00001]
         )
 
 
@@ -135,20 +135,21 @@
         return d
 
     def main():
-        embedding_size = 300
-        epoch = 100
+        embedding_size = 100
+        epoch = 2
         sent_numb = 40
         sent_len = 20
-        data = Dataset(train_size=50000,dev_size=None,test_size=None,sent_len=sent_len,
+        data = Dataset(train_size=100,dev_size=None,test_size=None,sent_len=sent_len,
                         sent_numb=sent_numb, embedding_size=embedding_size)
 
-        batch_size_arr = [256,512,1024,128,64,32]
+        batch_size_arr = [256,512,128,64,32]
         dr_arr = [0.2,0.5,0.7]
         best_accuracy = 0.0
-        for exp in range(2001,3000):
+        for exp in range(8001,9000):
             batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
             dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
             par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+            logging.info(par)
             train_loss, train_acc, val_loss, val_acc= train(epoch,batch_size, data,par,test_num=exp,dr=dr)
             par['id'] = 'Par'+ str(exp)
             par['acc'] = sorted([v for k,v in val_acc.items()])[-1]
