@@ -55,7 +55,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
-                if counter % 10 == 0:
+                if counter % 100 == 0:
                     logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
             # Add train loss, train acc to data
             train_loss[e], train_acc[e] = loss / float(counter), acc / float(counter)
@@ -140,11 +140,11 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     return d
 
 def main():
-    embedding_size = 100
+    embedding_size = 200
     epoch = 200
     sent_numb ,sent_len = None, None
-    max_windows,win = 64 , 3
-    data = Dataset(train_size=100,dev_size=None,test_size=None,sent_len=sent_len,
+    max_windows,win = 40 , 3
+    data = Dataset(train_size=50000,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 

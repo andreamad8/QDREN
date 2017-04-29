@@ -158,8 +158,8 @@ class EntityNetwork():
             # print(len([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ]))
             # print(len([ tf.nn.l2_loss(v) for v in var]))
 
-            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
-            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
+            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
+            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
         else:
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)

@@ -61,7 +61,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         b = tf.reduce_sum(inputs * tf.expand_dims(key_j, 0), axis=1)
         return tf.nn.sigmoid(a + b)
 
-    def get_candidate(self, state_j, key_j, inputs, U, V, W,b):
+    def get_candidate(self, state_j, key_j, inputs, U, V, W):
         """
         Represents the new memory candidate that will be weighted by the
         gate value and combined with the existing memory. Equation 3:
@@ -69,7 +69,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         h_j^~ <- \phi(U h_j + V w_j + W s_t)
         """
         key_V = tf.matmul(tf.expand_dims(key_j, 0), V)
-        state_U = tf.matmul(state_j, U) + b
+        state_U = tf.matmul(state_j, U)
         inputs_W = tf.matmul(inputs, W)
         return self._activation(state_U + key_V + inputs_W)
 
@@ -83,7 +83,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             V = tf.get_variable('V', [self._num_units_per_block, self._num_units_per_block])
             W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
 
-            b = tf.get_variable('biasU',[self._num_units_per_block])
+            # b = tf.get_variable('biasU',[self._num_units_per_block])
 
             # TODO: layer norm?
 
@@ -91,7 +91,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             for j, state_j in enumerate(state): # Hidden State (j)
                 key_j = self._keys[j]
                 gate_j = self.get_gate(state_j, key_j, inputs)
-                candidate_j = self.get_candidate(state_j, key_j, inputs, U, V, W,b)
+                candidate_j = self.get_candidate(state_j, key_j, inputs, U, V, W)
 
                 # Equation 4: h_j <- h_j + g_j * h_j^~
                 # Perform an update of the hidden state (memory).
@@ -99,7 +99,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
 
                 # Equation 5: h_j <- h_j / \norm{h_j}
                 # Forget previous memories by normalization.
-                # state_j_next = tf.nn.l2_normalize(state_j_next, -1, epsilon=1e-7) # TODO: Is epsilon necessary?
+                state_j_next = tf.nn.l2_normalize(state_j_next, -1, epsilon=1e-7) # TODO: Is epsilon necessary?
 
                 next_states.append(state_j_next)
             state_next = tf.concat(next_states, 1)
