@@ -7,8 +7,8 @@ from collections import Counter
 from iteration_utilities import flatten
 
 class Dataset():
-    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size):
-        self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size)
+    def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win):
+        self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows=max_windows, win=win)
         self.len_train = len(self._data['train']['S'])
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
@@ -59,7 +59,7 @@ class Dataset():
                 keep_prob:1.0}
 
 
-def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size):
+def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows, win):
     embedding_file = 'data/glove.6B.{}d.txt'.format(embedding_size)
     logging.info('-' * 50)
     logging.info('Load data files..')
@@ -82,7 +82,7 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
 
     logging.info('-' * 50)
     logging.info('Build dictionary..')
-    word_dict = build_dict(train_examples[0] + train_examples[1] + dev_examples[0] + dev_examples[1] + test_examples[0] + test_examples[1])
+    word_dict = build_dict(train_examples[0] + train_examples[1] + dev_examples[0] + dev_examples[1] + test_examples[0] + test_examples[1],win=win)
     entity_markers = list(set([w for w in word_dict.keys() if w.startswith('@entity')] + train_examples[2]))
     entity_markers = ['<unk_entity>'] + entity_markers
     entity_dict = {w: index for (index, w) in enumerate(entity_markers)}
@@ -97,9 +97,15 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
     # vectorize Data
     logging.info('-' * 50)
     logging.info('Vectorize training..')
-    train_x1, train_x2, train_l, train_y = vectorize(train_examples, word_dict, entity_dict, sent_len, sent_numb)
-    dev_x1, dev_x2, dev_l, dev_y = vectorize(dev_examples, word_dict, entity_dict, sent_len, sent_numb)
-    test_x1, test_x2, test_l, test_y = vectorize(test_examples, word_dict, entity_dict, sent_len, sent_numb)
+    if (win != None):
+        train_x1, train_x2, train_l, train_y = vectorize_window(train_examples, word_dict, entity_dict, max_windows=max_windows, win=win)
+        dev_x1, dev_x2, dev_l, dev_y = vectorize_window(dev_examples, word_dict, entity_dict, max_windows=max_windows, win=win)
+        test_x1, test_x2, test_l, test_y = vectorize_window(test_examples, word_dict, entity_dict, max_windows=max_windows, win=win)
+
+    else:
+        train_x1, train_x2, train_l, train_y = vectorize(train_examples, word_dict, entity_dict, sent_len, sent_numb)
+        dev_x1, dev_x2, dev_l, dev_y = vectorize(dev_examples, word_dict, entity_dict, sent_len, sent_numb)
+        test_x1, test_x2, test_l, test_y = vectorize(test_examples, word_dict, entity_dict, sent_len, sent_numb)
 
     return {'train':{'S':train_x1, 'Q':train_x2, 'A':train_y},
             'val':{'S':dev_x1, 'Q':dev_x2, 'A':dev_y},
@@ -167,7 +173,7 @@ def load_data(in_file, max_example=None, relabeling=True):
     return (documents, questions, answers)
 
 
-def build_dict(sentences, max_words=50000):
+def build_dict(sentences,win=2, max_words=50000):
     """
         Build a dictionary for the words in `sentences`.
         Only the max_words ones are kept and the remaining will be mapped to <UNK>.
@@ -178,6 +184,12 @@ def build_dict(sentences, max_words=50000):
             word_count[w] += 1
 
     ls = word_count.most_common(max_words)
+    if (win != None):
+        for j in range(win):
+            ls.insert(0,('<begin-' + str(j) +'>',0))
+        for j in range(win):
+            ls.insert(0,('<end-' + str(j) +'>',0))
+
     logging.info('#Words: %d -> %d' % (len(word_count), len(ls)))
     for key in ls[:5]:
         logging.info(key)
@@ -187,7 +199,7 @@ def build_dict(sentences, max_words=50000):
 
     # leave 0 to UNK
     # leave 1 to delimiter |||
-    return {w[0]: index + 2 for (index, w) in enumerate(ls)}
+    return {w[0]: index + 1 for (index, w) in enumerate(ls)}
 
 
 def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
@@ -238,6 +250,7 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
             in_x2.append(q_words)
             in_l[idx, [entity_dict[w] for w in flatten(d_sents) if w in entity_dict]] = 1.0
             in_y.append(entity_dict[a] if a in entity_dict else 0)
+
         if verbose and (idx % 100000 == 0):
             logging.info('Vectorization: processed %d / %d' % (idx, len(examples[0])))
     # logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
@@ -257,16 +270,50 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
     return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), in_l, np.array(in_y)
 
 
-def prepare_data(seqs):
-    lengths = [len(seq) for seq in seqs]
-    n_samples = len(seqs)
-    max_len = np.max(lengths)
-    x = np.zeros((n_samples, max_len)).astype('int32')
-    x_mask = np.zeros((n_samples, max_len)).astype(config._floatX)
-    for idx, seq in enumerate(seqs):
-        x[idx, :lengths[idx]] = seq
-        x_mask[idx, :lengths[idx]] = 1.0
-    return x, x_mask
+
+def vectorize_window(examples, word_dict, entity_dict, max_windows, win):
+    """
+        Vectorize `examples` generating windows around candidates
+        in_x1, in_x2: sequences for document and question respecitvely.
+        in_y: label
+        in_l: whether the entity label occurs in the document.
+    """
+    in_x1 = []
+    in_x2 = []
+    in_l = np.zeros((len(examples[0]), len(entity_dict)))
+    in_y = []
+    for idx, (d, q, a) in enumerate(zip(examples[0], examples[1], examples[2])):
+        d_windows = []
+        ## vectorize_window document
+        d_words = d.split(' ')
+        q_words = q.split(' ')
+        for j in range(win):
+            d_words.insert(0,'<begin-' + str(j) +'>')
+            d_words.append('<end-' + str(j) +'>')
+            q_words.insert(0,'<begin-' + str(j) +'>')
+            q_words.append('<end-' + str(j) +'>')
+
+        assert (a in d_words)
+        for i in range(win,len(d_words)-win):
+            if(d_words[i] in entity_dict):
+                d_windows.append([word_dict[w] if w in word_dict else 0 for w in d_words[i-win:i+win+1]])
+
+        # pad to max_windows
+        lm = max(0, max_windows - len(d_windows))
+        for _ in range(lm):
+            d_windows.append([0] * ((win*2)+1))
+        d_windows = d_windows[:max_windows]
+
+        for i in range(win,len(q_words)-win):
+            if(q_words[i] == '@placeholder'):
+                q_windows = [word_dict[w] if w in word_dict else 0 for w in q_words[i-win:i+win+1]]
+
+        in_x1.append(d_windows)
+        in_x2.append(q_windows)
+        in_l[idx, [entity_dict[w] for w in d_words if w in entity_dict]] = 1.0
+        in_y.append(entity_dict[a] if a in entity_dict else 0)
+
+    return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), in_l, np.array(in_y)
 
 
 def get_minibatches(n, minibatch_size, shuffle=False):
@@ -307,23 +354,3 @@ def gen_embeddings(word_dict, dim, in_file=None,
                 embeddings[word_dict[sp[0]]] = [float(x) for x in sp[1:]]
         logging.info('Pre-trained: %d (%.2f%%)' % (pre_trained, pre_trained * 100.0 / num_words))
     return embeddings
-
-
-def save_params(file_name, params, **kwargs):
-    """
-        Save params to file_name.
-        params: a list of Theano variables
-    """
-    dic = {'params': [x.get_value() for x in params]}
-    dic.update(kwargs)
-    with gzip.open(file_name, "w") as save_file:
-        pickle.dump(obj=dic, file=save_file, protocol=-1)
-
-
-def load_params(file_name):
-    """
-        Load params from file_name.
-    """
-    with gzip.open(file_name, "rb") as save_file:
-        dic = pickle.load(save_file)
-    return dic

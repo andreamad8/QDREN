@@ -88,25 +88,21 @@ def train(epoch,batch_size, data,par,test_num,dr):
                     pickle.dump((train_loss, train_acc, val_loss, val_acc), f)
 
 
-                # Test Loop
-                test_loss_val, test_acc_val, counter_test = 0.0, 0.0, 0
-                for i, elem in enumerate(data.get_batch_train(batch_size,'test')):
-                    dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1])
-                    curr_loss_test, curr_acc_test = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
-                    test_loss_val, test_acc_val, counter_test = test_loss_val + curr_loss_test, test_acc_val + curr_acc_test, counter_test + 1
-                logging.info("Epoch %d Test Loss: %.3f\tTest Accuracy: %.3f" % (e, test_loss_val / float(counter_test), test_acc_val/float(counter_test)))
+
 
             # Early Stopping Condition
             if patient > 5:
                 break
+        # # Test Loop
+        # test_loss_val, test_acc_val, counter_test = 0.0, 0.0, 0
+        # for i, elem in enumerate(data.get_batch_train(batch_size,'test')):
+        #     dic = data.get_dic_val(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1])
+        #     curr_loss_test, curr_acc_test = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
+        #     test_loss_val, test_acc_val, counter_test = test_loss_val + curr_loss_test, test_acc_val + curr_acc_test, counter_test + 1
+        # logging.info("Test Loss: %.3f\tTest Accuracy: %.3f" % (test_loss_val / float(counter_test), test_acc_val/float(counter_test)))
 
-        # dic = data.get_dic_test(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
-        # test_loss, test_acc = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
-        #
-        # # Print and Write Test Loss/Accuracy
-        # logging.info("Test Loss: %.3f\tTest Accuracy: %.3f" % (test_loss, test_acc))
         saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step)
-        return train_loss, train_acc, val_loss, val_acc
+        return train_loss, train_acc, val_loss, val_acc, '', ''
 
 def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     """
@@ -117,7 +113,7 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = [data._data["vocab_size"]],
     label_num = [data._data["label_num"]],
-    num_blocks = [70],#[5,10,20,50,70],
+    num_blocks = [10],#[5,10,20,50,70],
     sent_len = [sent_len],
     sent_numb = [sent_numb],
     embedding_size = [embedding_size],
@@ -144,23 +140,23 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     return d
 
 def main():
-    embedding_size = 100
+    embedding_size = 50
     epoch = 100
-    sent_numb = 50
-    sent_len = 30
-    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
+    sent_numb ,sent_len = 10, 10
+    max_windows,win = 10 , 2
+    data = Dataset(train_size=100,dev_size=100,test_size=100,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
-                    max_windows=None,win=None)
+                    max_windows=max_windows,win=win)
 
     batch_size_arr = [256]#,512,128,64,32]
     dr_arr = [0.7]#[0.2,0.5,0.7]
     best_accuracy = 0.0
-    for exp in range(8000,9000):
+    for exp in range(0,1000):
         batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
         dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
-        par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+        par = get_random_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
         logging.info(par)
-        train_loss, train_acc, val_loss, val_acc= train(epoch,batch_size, data,par,test_num=exp,dr=dr)
+        train_loss, train_acc, val_loss, val_acc, test_loss, test_acc = train(epoch,batch_size, data,par,test_num=exp,dr=dr)
         par['id'] = 'Par'+ str(exp)
         par['acc'] = sorted([v for k,v in val_acc.items()])[-1]
         par['embeddings_mat']=''
