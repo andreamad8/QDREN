@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-from src.utils import variable_summaries
 import tflearn
 from collections import namedtuple
 from tflearn.activations import sigmoid, softmax

@@ -20,7 +20,7 @@ from data.email_util import send_email
 
 def train(epoch,batch_size, data,par,test_num,dr):
     # Setup Checkpoint + Log Paths
-    ckpt_dir = "checkpoints/CNN{}/".format(test_num)
+    ckpt_dir = "checkpoints/CNN_win{}/".format(test_num)
     if not os.path.exists(ckpt_dir):
         os.mkdir(ckpt_dir)
 
@@ -55,7 +55,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
-                if counter % 100 == 0:
+                if counter % 10 == 0:
                     logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
             # Add train loss, train acc to data
             train_loss[e], train_acc[e] = loss / float(counter), acc / float(counter)
@@ -91,7 +91,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
 
 
             # Early Stopping Condition
-            if patient > 5:
+            if patient > 7:
                 break
         # # Test Loop
         # test_loss_val, test_acc_val, counter_test = 0.0, 0.0, 0
@@ -113,20 +113,20 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = [data._data["vocab_size"]],
     label_num = [data._data["label_num"]],
-    num_blocks = [10],#[5,10,20,50,70],
+    num_blocks = [5,10,20,50,70],
     sent_len = [sent_len],
     sent_numb = [sent_numb],
     embedding_size = [embedding_size],
     embeddings_mat = [data._data["embeddings_mat"]],
-    learning_rate= [0.001],# [0.1,0.01,0.001,0.0001],
-    clip_gradients= [-1.0],#[-10,-1.0,1.0,10.0,40.0],
-    opt = ['Adam'],#'RMSProp', 'SGD'],
-    trainable = [[1,1,0,0]],#[1,0,0,0],[0,0,0,0]],
+    learning_rate= [0.1,0.01,0.001,0.0001],
+    clip_gradients= [-10.0,-1.0,1.0,10.0,40.0],
+    opt = ['Adam','RMSProp', 'SGD'],
+    trainable = [[1,1,0,0],[1,0,0,0],[0,0,0,0]],
     max_norm = [None],#[None,None,1],
     no_out = [False],
     decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
     decay_rate = [0],
-    L2 = [0.0001]# [0,0.01,0.001,0.0001,0.00001]
+    L2 = [0.0001,0,0.01,0.001,0.0001,0.00001]
     )
 
 
@@ -140,18 +140,18 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     return d
 
 def main():
-    embedding_size = 50
-    epoch = 100
-    sent_numb ,sent_len = 10, 10
-    max_windows,win = 10 , 2
-    data = Dataset(train_size=100,dev_size=100,test_size=100,sent_len=sent_len,
+    embedding_size = 100
+    epoch = 200
+    sent_numb ,sent_len = None, None
+    max_windows,win = 64 , 3
+    data = Dataset(train_size=100,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
-    batch_size_arr = [256]#,512,128,64,32]
-    dr_arr = [0.7]#[0.2,0.5,0.7]
+    batch_size_arr = [1024,256,512,128,64,32]
+    dr_arr = [0.2,0.5,0.7]
     best_accuracy = 0.0
-    for exp in range(0,1000):
+    for exp in range(1000,2000):
         batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
         dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
         par = get_random_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
@@ -164,7 +164,7 @@ def main():
         par['dr']= dr
         if (par['acc']>=best_accuracy):
             best_accuracy =par['acc']
-            send_email("Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'EX %s'%exp)
+            send_email("Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'EX win %s'%exp)
 
 
 if __name__ == '__main__':

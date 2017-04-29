@@ -1,17 +1,15 @@
 from __future__ import print_function
-from DMC import DynamicMemoryCell,prelu_func
+from DMC_simple import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
 import functools
 
 
-prelu = functools.partial(prelu_func, initializer=tf.constant_initializer(1.0))
-
 class EntityNetwork():
     def __init__(self, vocab_size, sent_len, sent_numb, num_blocks, embedding_size,
                  learning_rate, decay_steps, decay_rate, opt, label_num,L2,
-                 trainable, no_out,max_norm, clip_gradients=40.0,embeddings_mat =[],
+                 trainable, no_out,max_norm, clip_gradients ,embeddings_mat =[],
                  initializer=tf.random_normal_initializer(stddev=0.1)):
         """
         Initialize an Entity Network with the necessary hyperparameters.
@@ -65,14 +63,15 @@ class EntityNetwork():
         ## use pretrained emb
         if (self.trainable[0]):
             # E = tf.get_variable('word_emb',self.embeddings_mat)
-            E = tf.get_variable('Embedding',[self.vocab_size, self.embedding_size],
+            self.E = tf.get_variable('Embedding',[self.vocab_size, self.embedding_size],
                         initializer=tf.constant_initializer(np.array(self.embeddings_mat)),
                         trainable=self.trainable[1])
         else:
-            E = tf.get_variable("Embedding",[self.vocab_size, self.embedding_size], initializer=self.init)
+            self.E = tf.get_variable("Embedding",[self.vocab_size, self.embedding_size], initializer=self.init)
 
-        zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
-        self.E = E * zero_mask
+        # zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
+        # self.E = E * zero_mask
+
 
         # Create Learnable Mask
         self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, 1], initializer=tf.constant_initializer(1.0))
@@ -102,47 +101,49 @@ class EntityNetwork():
         """
 
         # Story Input Encoder
-        story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm)             # Shape: [None, story_len, sent_len, embed_sz]
-        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)
-        story_embeddings = tf.multiply(story_embeddings, self.story_mask)     # Shape: [None, story_len, sent_len, embed_sz]
-        story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])          # Shape: [None, story_len, embed_sz]
+        story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
+        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
+        story_embeddings = tf.multiply(story_embeddings, self.story_mask)
+        story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 
         # Query Input Encoder
-        query_embedding = tf.nn.embedding_lookup(self.E, self.Q,max_norm=self.max_norm)              # Shape: [None, sent_len, embed_sz]
-        query_embedding = tf.multiply(query_embedding, self.query_mask)       # Shape: [None, sent_len, embed_sz]
-        query_embedding = tf.reduce_sum(query_embedding, axis=[2])            # Shape: [None, embed_sz]
+        query_embedding = tf.nn.embedding_lookup(self.E, self.Q,max_norm=self.max_norm)  # Shape: [None, sent_len, embed_sz]
+        query_embedding = tf.multiply(query_embedding, self.query_mask)                  # Shape: [None, sent_len, embed_sz]
+        query_embedding = tf.reduce_sum(query_embedding, axis=[2])                       # Shape: [None, embed_sz]
 
         ## to input into a dynacmicRNN we need to specify the lenght of each sentence
-        length = tf.cast(tf.reduce_sum(tf.sign(tf.reduce_max(tf.abs(self.S), axis=2)), axis=1), tf.int32)
+        # length = tf.cast(tf.reduce_sum(tf.sign(tf.reduce_max(tf.abs(self.S), axis=2)), axis=1), tf.int32)
+        self.length = self.get_sequence_length()
 
         # Send Story through Memory Cell
         initial_state = self.cell.zero_state(self.batch_size, dtype=tf.float32)
         _, memories = tf.nn.dynamic_rnn(self.cell, story_embeddings,
-                                        sequence_length=length,
+                                        sequence_length=self.length,
                                         initial_state=initial_state)
 
         # Output Module
-        stacked_memories = tf.stack(memories, axis=1)
+        # stacked_memories = tf.stack(memories, axis=1)
+        stacked_memories = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
 
 
         # Generate Memory Scores
-        p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,        # Shape: [None, mem_slots]
+        p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,                   # Shape: [None, mem_slots]
                                                       query_embedding), axis=[2]))
 
         # Subtract max for numerical stability (softmax is shift invariant)
         p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
         attention = tf.nn.softmax(p_scores - p_max)
-        attention = tf.expand_dims(attention, 2)                              # Shape: [None, mem_slots, 1]
+        attention = tf.expand_dims(attention, 2)                                         # Shape: [None, mem_slots, 1]
 
         if (self.no_out):
             return p_scores
         else:
             # Weight memories by attention vectors
-            u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)   # Shape: [None, embed_sz]
+            u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
             # Output Transformations => Logits
 
-            hidden = tf.sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))                # Shape: [None, embed_sz]
+            hidden = tf.sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 
@@ -153,14 +154,15 @@ class EntityNetwork():
         if(self.L2 !=0):
             var = tf.trainable_variables()
             # for v in var:
-            #     print(type(v.name))
-            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'Embedding:0' != v.name ])  * self.L2
-            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
+            #     print(v.name)
+            # print(len([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ]))
+            # print(len([ tf.nn.l2_loss(v) for v in var]))
+
+            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
+            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
         else:
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)
-
-        # tf.losses.sparse_softmax_cross_entropy
 
     def train(self):
         """
@@ -173,3 +175,11 @@ class EntityNetwork():
                                                    learning_rate=self.learning_rate, optimizer=self.opt,
                                                    clip_gradients=self.clip_gradients)
         return train_op
+
+    def get_sequence_length(self):
+        """
+        This is a hacky way of determining the actual length of a sequence that has been padded with zeros.
+        """
+        used = tf.sign(tf.reduce_max(tf.abs(self.S), axis=-1))
+        length = tf.cast(tf.reduce_sum(used, axis=-1), tf.int32)
+        return length
