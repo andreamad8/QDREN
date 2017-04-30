@@ -5,6 +5,8 @@ import gzip
 import logging
 from collections import Counter
 from iteration_utilities import flatten
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 class Dataset():
     def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win):
@@ -110,7 +112,12 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
         train_x1, train_x2, train_l, train_y = vectorize(train_examples, word_dict, entity_dict, sent_len, sent_numb)
         dev_x1, dev_x2, dev_l, dev_y = vectorize(dev_examples, word_dict, entity_dict, sent_len, sent_numb)
         test_x1, test_x2, test_l, test_y = vectorize(test_examples, word_dict, entity_dict, sent_len, sent_numb)
-
+    #
+    # sns.distplot(train_y,bins=51)
+    # sns.distplot(dev_y,bins=51)
+    # sns.distplot(test_y,bins=51)
+    #
+    # plt.show()
     return {'train':{'S':train_x1, 'Q':train_x2, 'A':train_y},
             'val':{'S':dev_x1, 'Q':dev_x2, 'A':dev_y},
             'test':{'S':test_x1, 'Q':test_x2, 'A':test_y},
@@ -130,10 +137,10 @@ def load_data(in_file, max_example=None, relabeling=True):
         load CNN / Daily Mail data from {train | dev | test}.txt
         relabeling: relabel the entities by their first occurence if it is True.
     """
-    special_char = {"!":"","?":"",":":"",";":"","(":"",")":"",".":"","..":"",
-                    "...":"",",":"","_":"","'":"","*":"","#":"","-":"","--":"",
-                    "---":"","\xc2\xa9":"","\xc2\xaa":"","\xe2\x82\xac":"",
-                    "\"":"","^":""}
+    # special_char = {"!":"","?":"",":":"",";":"","(":"",")":"",".":"","..":"",
+    #                 "...":"",",":"","_":"","'":"","*":"","#":"","-":"","--":"",
+    #                 "---":"","\xc2\xa9":"","\xc2\xaa":"","\xe2\x82\xac":"",
+    #                 "\"":"","^":"","15\xc2\xbd":""}
     documents = []
     questions = []
     answers = []
@@ -161,11 +168,11 @@ def load_data(in_file, max_example=None, relabeling=True):
 
             # add filter for special charatters
             q_words = [entity_dict[w] if w in entity_dict else w for w in q_words]
-            q_words = filter(lambda x : x not in special_char, q_words)
+            # q_words = filter(lambda x : x not in special_char, q_words)
 
             # add filter for special charatters
             d_words = [entity_dict[w] if w in entity_dict else w for w in d_words]
-            d_words = filter(lambda x : x not in special_char, d_words)
+            # d_words = filter(lambda x : x not in special_char, d_words)
 
             answer = entity_dict[answer]
 

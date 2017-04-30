@@ -100,8 +100,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
 
                 # Equation 5: h_j <- h_j / \norm{h_j}
                 # Forget previous memories by normalization.
-                state_j_next = tf.nn.l2_normalize(state_j_next, -1, epsilon=1e-7) # TODO: Is epsilon necessary?
-
+                state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
                 next_states.append(state_j_next)
             state_next = tf.concat(next_states, 1)
         return state_next, state_next

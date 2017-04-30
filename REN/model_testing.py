@@ -90,7 +90,7 @@ def main():
     epoch = 100
     sent_numb ,sent_len = None, None
     max_windows,win = 2, 1
-    data = Dataset(train_size=5,dev_size=1,test_size=1,sent_len=sent_len,
+    data = Dataset(train_size=4000,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 

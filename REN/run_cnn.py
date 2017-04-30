@@ -55,7 +55,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
                 curr_loss, curr_acc, _ = sess.run([entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                                   feed_dict=dic)
                 loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
-                if counter % 1000 == 0:
+                if counter % 10 == 0:
                     logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
             # Add train loss, train acc to data
             train_loss[e], train_acc[e] = loss / float(counter), acc / float(counter)
@@ -97,7 +97,7 @@ def train(epoch,batch_size, data,par,test_num,dr):
                 logging.info("Epoch %d Test Loss: %.3f\tTest Accuracy: %.3f" % (e, test_loss_val / float(counter_test), test_acc_val/float(counter_test)))
 
             # Early Stopping Condition
-            if patient > 5:
+            if patient > 15:
                 break
 
         # dic = data.get_dic_test(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob)
@@ -117,20 +117,20 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = [data._data["vocab_size"]],
     label_num = [data._data["label_num"]],
-    num_blocks = [70],#[5,10,20,50,70],
+    num_blocks = [5,10,20,50,70,90],
     sent_len = [sent_len],
     sent_numb = [sent_numb],
     embedding_size = [embedding_size],
     embeddings_mat = [data._data["embeddings_mat"]],
-    learning_rate= [0.001],# [0.1,0.01,0.001,0.0001],
-    clip_gradients= [40.0],#[-10,-1.0,1.0,10.0,40.0],
-    opt = ['RMSProp'],#'RMSProp', 'SGD'],
-    trainable = [[1,1,0,0]],#[1,0,0,0],[0,0,0,0]],
+    learning_rate= [0.1,0.01,0.001,0.0001],
+    clip_gradients= [-10.0,-1.0,1.0,10.0,40.0],
+    opt = ['Adam','RMSProp'],
+    trainable = [[1,1,0,0],[1,0,0,0],[0,0,0,0]],
     max_norm = [None],#[None,None,1],
     no_out = [False],
     decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
     decay_rate = [0],
-    L2 = [0.001]# [0,0.01,0.001,0.0001,0.00001]
+    L2 = [0.001,0,0.01,0.001,0.0001,0.00001]
     )
 
 
@@ -146,20 +146,20 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 def main():
     embedding_size = 100
     epoch = 100
-    sent_numb = 40
-    sent_len = 20
-    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
+    sent_numb = 50
+    sent_len = 30
+    data = Dataset(train_size=10000,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size)#, max_windows=None,win=None)
 
-    batch_size_arr = [128]#,512,128,64,32]
-    dr_arr = [0.7]#[0.2,0.5,0.7]
+    batch_size_arr = [128,512,128,64,32]
+    dr_arr = [0.2,0.5,0.7,0.9]
     best_accuracy = 0.0
-    for exp in range(9000,9001):
+    for exp in range(1,1000):
         batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
         dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
         par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)
         logging.info(par)
-        train_loss, train_acc, val_loss, val_acc= train(epoch,batch_size, data,par,test_num=exp,dr=dr)
+        train_loss, train_acc, val_loss, val_acc= train(epoch,batch_size, data,par,test_num='SMMQ_%s'%exp,dr=dr)
         par['id'] = 'Par'+ str(exp)
         par['acc'] = sorted([v for k,v in val_acc.items()])[-1]
         par['embeddings_mat']=''
@@ -167,7 +167,7 @@ def main():
         par['dr']= dr
         if (par['acc']>=best_accuracy):
             best_accuracy =par['acc']
-            send_email("Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'EX %s'%exp)
+            send_email("Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'Sentence multi mask, with query. Ex: %s'%exp)
 
 
 if __name__ == '__main__':

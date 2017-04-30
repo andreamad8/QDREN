@@ -102,7 +102,7 @@ class EntityNetwork():
 
         # Story Input Encoder
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
-        # story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
+        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)
         story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 
@@ -116,7 +116,8 @@ class EntityNetwork():
         self.length = self.get_sequence_length()
         # Create Memory Cell
         self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size, self.keys, query_embedding)
-        self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
+        # self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
+
         # Send Story through Memory Cell
         initial_state = self.cell.zero_state(self.batch_size, dtype=tf.float32)
         self.out, memories = tf.nn.dynamic_rnn(self.cell, story_embeddings,
@@ -185,3 +186,16 @@ class EntityNetwork():
         used = tf.sign(tf.reduce_max(tf.abs(self.S), axis=-1))
         length = tf.cast(tf.reduce_sum(used, axis=-1), tf.int32)
         return length
+
+    def position_encoding(self,sentence_size, embedding_size):
+        """
+        Position Encoding described in section 4.1 [1]
+        """
+        encoding = np.ones((embedding_size, sentence_size), dtype=np.float32)
+        ls = sentence_size+1
+        le = embedding_size+1
+        for i in range(1, le):
+            for j in range(1, ls):
+                encoding[i-1, j-1] = (i - (le-1)/2) * (j - (ls-1)/2)
+        encoding = 1 + 4 * encoding / embedding_size / sentence_size
+        return np.transpose(encoding)
