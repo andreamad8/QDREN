@@ -90,9 +90,13 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
     num_labels = len(entity_dict)
 
     logging.info('-' * 50)
-    # Load embedding file
-    embeddings = gen_embeddings(word_dict, embedding_size, embedding_file)
-    (vocab_size, embedding_size) = embeddings.shape
+    if(embedding_size not in [50,100,200,300]):
+        vocab_size = max(word_dict.values()) + 1
+        embeddings = []
+    else:
+        # Load embedding file
+        embeddings = gen_embeddings(word_dict, embedding_size, embedding_file)
+        (vocab_size, embedding_size) = embeddings.shape
 
     # vectorize Data
     logging.info('-' * 50)

@@ -36,9 +36,13 @@ def train(epoch,batch_size, data,par,test_num,dr):
         loss, acc, counter = 0.0, 0.0, 0
         for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
             dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
-            le,curr_loss, curr_acc, _ = sess.run([entity_net.length,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
+            ma,curr_loss, curr_acc, _ = sess.run([entity_net.query_mask,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
                                               feed_dict=dic)
-            logging.info(le)
+            # logging.info('-' * 50)
+            # print(ma)
+            # print(quey_e)
+            # print(quey_e_m)
+
 
         sess.run(entity_net.epoch_increment)
 
@@ -54,7 +58,7 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = [data._data["vocab_size"]],
     label_num = [data._data["label_num"]],
-    num_blocks = [5],
+    num_blocks = [2],
     sent_len = [sent_len],
     sent_numb = [sent_numb],
     embedding_size = [embedding_size],
@@ -62,7 +66,7 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     learning_rate= [0.1],
     clip_gradients= [1.0],
     opt = ['Adam'],
-    trainable = [[1,1,0,0]],
+    trainable = [[0,0,0,0]],
     max_norm = [None],#[None,None,1],
     no_out = [False],
     decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
@@ -81,15 +85,15 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     return d
 
 def main():
-    embedding_size = 50
+    embedding_size = 2
     epoch = 100
     sent_numb ,sent_len = None, None
-    max_windows,win = 64 , 3
-    data = Dataset(train_size=100,dev_size=1,test_size=1,sent_len=sent_len,
+    max_windows,win = 64, 1
+    data = Dataset(train_size=5,dev_size=1,test_size=1,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
-    batch_size_arr = [1]
+    batch_size_arr = [3]
     dr_arr = [0.7]
     best_accuracy = 0.0
     batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]

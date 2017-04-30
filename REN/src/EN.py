@@ -74,8 +74,10 @@ class EntityNetwork():
 
 
         # Create Learnable Mask
-        self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, 1], initializer=tf.constant_initializer(1.0))
-        self.query_mask = tf.get_variable("Query_Mask", [self.sent_len, 1], initializer=tf.constant_initializer(1.0))
+        self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, self.embedding_size],
+                                          initializer=tf.constant_initializer(1.0),trainable=True)
+        self.query_mask = tf.get_variable("Query_Mask", [self.sent_len, self.embedding_size],
+                                          initializer=tf.constant_initializer(1.0),trainable=True)
 
         # Create Memory Cell Keys
         if (self.trainable[2]):
@@ -85,8 +87,6 @@ class EntityNetwork():
         else:
             self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size]) for j in range(self.num_blocks)]
 
-        # Create Memory Cell
-        self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size, self.keys)
 
         if (not self.no_out):
             # Output Module Variables
@@ -109,11 +109,13 @@ class EntityNetwork():
         # Query Input Encoder
         query_embedding = tf.nn.embedding_lookup(self.E, self.Q,max_norm=self.max_norm)  # Shape: [None, sent_len, embed_sz]
         query_embedding = tf.multiply(query_embedding, self.query_mask)                  # Shape: [None, sent_len, embed_sz]
-        query_embedding = tf.reduce_sum(query_embedding, axis=[2])                       # Shape: [None, embed_sz]
+        query_embedding = tf.reduce_sum(query_embedding, axis=[2])                       # Shape: [None, 1, embed_sz]
 
         ## to input into a dynacmicRNN we need to specify the lenght of each sentence
         # length = tf.cast(tf.reduce_sum(tf.sign(tf.reduce_max(tf.abs(self.S), axis=2)), axis=1), tf.int32)
         self.length = self.get_sequence_length()
+        # Create Memory Cell
+        self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size, self.keys, query_embedding)
 
         # Send Story through Memory Cell
         initial_state = self.cell.zero_state(self.batch_size, dtype=tf.float32)
@@ -158,8 +160,8 @@ class EntityNetwork():
             # print(len([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ]))
             # print(len([ tf.nn.l2_loss(v) for v in var]))
 
-            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
-            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
+            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
+            # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
         else:
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)

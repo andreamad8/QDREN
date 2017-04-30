@@ -4,10 +4,7 @@ from __future__ import division
 
 import numpy as np
 import tensorflow as tf
-from collections import namedtuple
 import functools
-
-
 
 def prelu_func(features, initializer=None, scope=None):
     """
@@ -26,14 +23,16 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
     The cell's hidden state is divided into blocks and each block's weights are tied.
     """
 
-    def __init__(self, num_blocks, num_units_per_block,
-                keys, initializer=tf.random_normal_initializer(stddev=0.1),
-                activation=prelu):
+    def __init__(self, num_blocks, num_units_per_block, keys, query_embedding,
+                activation = prelu,
+                initializer=tf.random_normal_initializer(stddev=0.1)):
         self._num_blocks = num_blocks # M
         self._num_units_per_block = num_units_per_block # d
         self._keys = keys
-        self._activation = activation # \phi
         self._initializer = initializer
+        self._activation = activation
+        self._q = query_embedding
+
 
     @property
     def state_size(self):
@@ -59,9 +58,11 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         """
         a = tf.reduce_sum(inputs * state_j, axis=1)
         b = tf.reduce_sum(inputs * tf.expand_dims(key_j, 0), axis=1)
-        return tf.nn.sigmoid(a + b)
+        c = tf.reduce_sum(inputs * tf.squeeze(self._q), axis=1)
 
-    def get_candidate(self, state_j, key_j, inputs, U, V, W):
+        return tf.nn.sigmoid(a + b + c)
+
+    def get_candidate(self, state_j, key_j, inputs, U, V, W, b):
         """
         Represents the new memory candidate that will be weighted by the
         gate value and combined with the existing memory. Equation 3:
@@ -69,7 +70,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         h_j^~ <- \phi(U h_j + V w_j + W s_t)
         """
         key_V = tf.matmul(tf.expand_dims(key_j, 0), V)
-        state_U = tf.matmul(state_j, U)
+        state_U = tf.matmul(state_j, U) + b
         inputs_W = tf.matmul(inputs, W)
         return self._activation(state_U + key_V + inputs_W)
 
@@ -83,7 +84,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             V = tf.get_variable('V', [self._num_units_per_block, self._num_units_per_block])
             W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
 
-            # b = tf.get_variable('biasU',[self._num_units_per_block])
+            b = tf.get_variable('biasU',[self._num_units_per_block])
 
             # TODO: layer norm?
 
@@ -91,7 +92,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             for j, state_j in enumerate(state): # Hidden State (j)
                 key_j = self._keys[j]
                 gate_j = self.get_gate(state_j, key_j, inputs)
-                candidate_j = self.get_candidate(state_j, key_j, inputs, U, V, W)
+                candidate_j = self.get_candidate(state_j, key_j, inputs, U, V, W, b)
 
                 # Equation 4: h_j <- h_j + g_j * h_j^~
                 # Perform an update of the hidden state (memory).
