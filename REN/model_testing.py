@@ -33,18 +33,19 @@ def train(epoch,batch_size, data,par,test_num,dr):
         curr_epoch = sess.run(entity_net.epoch_step)
 
         logging.info('Training stated')
-        loss, acc, counter = 0.0, 0.0, 0
-        for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
-            dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
-            ma,curr_loss, curr_acc, _ = sess.run([entity_net.query_mask,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
-                                              feed_dict=dic)
-            # logging.info('-' * 50)
-            # print(ma)
-            # print(quey_e)
-            # print(quey_e_m)
+        for e in range(1):
+            loss, acc, counter = 0.0, 0.0, 0
+            for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
+                dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
+                ma,curr_loss, curr_acc, _ = sess.run([entity_net.out,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
+                                                  feed_dict=dic)
+                logging.info('-' * 50)
+                print(ma)
+                # print(quey_e)
+                # print(quey_e_m)
 
 
-        sess.run(entity_net.epoch_increment)
+            sess.run(entity_net.epoch_increment)
 
 
         return train_loss, train_acc
@@ -85,15 +86,15 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     return d
 
 def main():
-    embedding_size = 2
+    embedding_size = 4
     epoch = 100
     sent_numb ,sent_len = None, None
-    max_windows,win = 64, 1
+    max_windows,win = 2, 1
     data = Dataset(train_size=5,dev_size=1,test_size=1,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
-    batch_size_arr = [3]
+    batch_size_arr = [2]
     dr_arr = [0.7]
     best_accuracy = 0.0
     batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]

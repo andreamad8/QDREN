@@ -102,7 +102,7 @@ class EntityNetwork():
 
         # Story Input Encoder
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
-        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
+        # story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)
         story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 
@@ -116,10 +116,10 @@ class EntityNetwork():
         self.length = self.get_sequence_length()
         # Create Memory Cell
         self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size, self.keys, query_embedding)
-
+        self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
         # Send Story through Memory Cell
         initial_state = self.cell.zero_state(self.batch_size, dtype=tf.float32)
-        _, memories = tf.nn.dynamic_rnn(self.cell, story_embeddings,
+        self.out, memories = tf.nn.dynamic_rnn(self.cell, story_embeddings,
                                         sequence_length=self.length,
                                         initial_state=initial_state)
 
