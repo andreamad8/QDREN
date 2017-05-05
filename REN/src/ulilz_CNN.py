@@ -5,8 +5,8 @@ import gzip
 import logging
 from collections import Counter
 from iteration_utilities import flatten
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 class Dataset():
     def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win):
@@ -15,8 +15,6 @@ class Dataset():
         self.len_val = len(self._data['val']['S'])
         self.len_test = len(self._data['test']['S'])
         self.num_batches=0
-
-
 
     def make_batches(self,size, batch_size):
         """Returns a list of batch indices (tuples of indices).
@@ -79,8 +77,6 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
     num_train = len(train_examples[0])
     num_dev = len(dev_examples[0])
     num_dev = len(test_examples[0])
-
-
 
     logging.info('-' * 50)
     logging.info('Build dictionary..')
@@ -339,21 +335,6 @@ def vectorize_window(examples, word_dict, entity_dict, max_windows, win):
 
 
     return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), in_l, np.array(in_y)
-
-
-def get_minibatches(n, minibatch_size, shuffle=False):
-    idx_list = np.arange(0, n, minibatch_size)
-    if shuffle:
-        np.random.shuffle(idx_list)
-    minibatches = []
-    for idx in idx_list:
-        minibatches.append(np.arange(idx, min(idx + minibatch_size, n)))
-    return minibatches
-
-
-def get_dim(in_file):
-    line = open(in_file).readline()
-    return len(line.split()) - 1
 
 
 def gen_embeddings(word_dict, dim, in_file=None,

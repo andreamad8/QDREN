@@ -1,9 +1,9 @@
 from __future__ import print_function
-from DMC_simple import DynamicMemoryCell
+from DMC import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
-import functools
+from functools import partial
 
 
 class EntityNetwork():
@@ -72,6 +72,10 @@ class EntityNetwork():
         # zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
         # self.E = E * zero_mask
 
+        alpha = tf.get_variable(name='alpha',
+                                shape=self.embedding_size,
+                                initializer=tf.constant_initializer(1.0))
+        self.activation = partial(prelu, alpha=alpha)
 
         # Create Learnable Mask
         self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, self.embedding_size],
@@ -114,8 +118,10 @@ class EntityNetwork():
         ## to input into a dynacmicRNN we need to specify the lenght of each sentence
         # length = tf.cast(tf.reduce_sum(tf.sign(tf.reduce_max(tf.abs(self.S), axis=2)), axis=1), tf.int32)
         self.length = self.get_sequence_length()
+
         # Create Memory Cell
-        self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size, self.keys, query_embedding)
+        self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size,
+                                      self.keys, query_embedding, self.activation)
         # self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
 
         # Send Story through Memory Cell
@@ -145,8 +151,7 @@ class EntityNetwork():
             u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
             # Output Transformations => Logits
-
-            hidden = tf.sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
+            hidden = self.activation(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 
@@ -155,13 +160,7 @@ class EntityNetwork():
         Build loss computation - softmax cross-entropy between logits, and correct answer.
         """
         if(self.L2 !=0):
-            var = tf.trainable_variables()
-            # for v in var:
-            #     print(v.name)
-            # print(len([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ]))
-            # print(len([ tf.nn.l2_loss(v) for v in var]))
-
-            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
+            lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
             # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
         else:
@@ -199,3 +198,12 @@ class EntityNetwork():
                 encoding[i-1, j-1] = (i - (le-1)/2) * (j - (ls-1)/2)
         encoding = 1 + 4 * encoding / embedding_size / sentence_size
         return np.transpose(encoding)
+
+def prelu(features, alpha, scope=None):
+    """
+    Implementation of [Parametric ReLU](https://arxiv.org/abs/1502.01852) borrowed from Keras.
+    """
+    with tf.variable_scope(scope, 'PReLU'):
+        pos = tf.nn.relu(features)
+        neg = alpha * (features - tf.abs(features)) * 0.5
+        return pos + neg

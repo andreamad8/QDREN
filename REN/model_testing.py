@@ -9,6 +9,7 @@ import time
 import datetime
 from src.ulilz_CNN import Dataset
 from src.EN import EntityNetwork
+from src.train import train
 import numpy as np
 import tensorflow as tf
 import tflearn
@@ -18,37 +19,37 @@ import cPickle as pickle
 import logging
 from data.email_util import send_email
 
-def train(epoch,batch_size, data,par,test_num,dr):
-
-    tf.reset_default_graph()
-    with tf.Session() as sess:
-        entity_net = EntityNetwork(**par)
-
-
-        logging.info('Initializing Variables!')
-        sess.run(tf.global_variables_initializer())
-        train_loss, train_acc, val_loss, val_acc = {}, {}, {}, {}
-
-        # Get Current Epoch
-        curr_epoch = sess.run(entity_net.epoch_step)
-
-        logging.info('Training stated')
-        for e in range(1):
-            loss, acc, counter = 0.0, 0.0, 0
-            for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
-                dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
-                ma,curr_loss, curr_acc, _ = sess.run([entity_net.out,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
-                                                  feed_dict=dic)
-                logging.info('-' * 50)
-                print(ma)
-                # print(quey_e)
-                # print(quey_e_m)
-
-
-            sess.run(entity_net.epoch_increment)
-
-
-        return train_loss, train_acc
+# def train(epoch,batch_size, data,par,test_num,dr):
+#
+#     tf.reset_default_graph()
+#     with tf.Session() as sess:
+#         entity_net = EntityNetwork(**par)
+#
+#
+#         logging.info('Initializing Variables!')
+#         sess.run(tf.global_variables_initializer())
+#         train_loss, train_acc, val_loss, val_acc = {}, {}, {}, {}
+#
+#         # Get Current Epoch
+#         curr_epoch = sess.run(entity_net.epoch_step)
+#
+#         logging.info('Training stated')
+#         for e in range(1):
+#             loss, acc, counter = 0.0, 0.0, 0
+#             for i, elem in enumerate(data.get_batch_train(batch_size,'train')):
+#                 dic = data.get_dic_train(entity_net.S,entity_net.Q,entity_net.A,entity_net.keep_prob,elem[0],elem[1],dr)
+#                 ma,curr_loss, curr_acc, _ = sess.run([entity_net.out,entity_net.loss_val, entity_net.accuracy, entity_net.train_op],
+#                                                   feed_dict=dic)
+#                 logging.info('-' * 50)
+#                 print(ma)
+#                 # print(quey_e)
+#                 # print(quey_e_m)
+#
+#
+#             sess.run(entity_net.epoch_increment)
+#
+#
+#         return train_loss, train_acc
 
 def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     """
@@ -90,7 +91,7 @@ def main():
     epoch = 100
     sent_numb ,sent_len = None, None
     max_windows,win = 2, 1
-    data = Dataset(train_size=4000,dev_size=None,test_size=None,sent_len=sent_len,
+    data = Dataset(train_size=10,dev_size=1,test_size=1,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
@@ -100,8 +101,7 @@ def main():
     batch_size = batch_size_arr[random.randint(0, len(batch_size_arr) - 1)]
     dr = dr_arr[random.randint(0, len(dr_arr) - 1)]
     par = get_random_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
-    train_loss, train_acc= train(epoch,batch_size, data,par,test_num=1,dr=dr)
-
+    train_loss, train_acc= train(epoch,batch_size, data,par,dr,True)
 
 
 if __name__ == '__main__':
