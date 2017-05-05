@@ -30,7 +30,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 90,
+    num_blocks = 5,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
@@ -50,7 +50,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 
 def main():
     embedding_size = 100
-    epoch = 1
+    epoch = 3
     sent_numb,sent_len = 50,30
     max_windows,win = None,None
     batch_size = 512

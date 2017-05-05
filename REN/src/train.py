@@ -77,7 +77,7 @@ def train(epoch,batch_size, data,par,dr, _test):
         for e in range(curr_epoch,epoch):
 
             train_loss[e], train_acc[e] = tr(10)
-            val_loss[e], val_acc[e]     = val_test('val')
+            val_loss[e], val_acc[e] = val_test('val')
             if (_test):
                 test_loss[e], test_acc[e] = val_test('test')
             # Update best_val
@@ -85,6 +85,9 @@ def train(epoch,batch_size, data,par,dr, _test):
                 best_val, patient = val_acc[e], 0
                 with open(ckpt_dir + "training_logs.pik", 'w') as f:
                     pickle.dump((train_loss, train_acc, val_loss, val_acc), f)
+                if (_test):
+                    send_email("Best Accuracy Test: %.3f \t Loss Test: %.3f" % (test_loss[e], test_acc[e]),'in %s' % str(ckpt_dir))
+
             else:
                 patient += 1
 
