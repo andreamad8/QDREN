@@ -43,7 +43,7 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     no_out = [False],
     decay_steps = [0], #  [epoch* data._data['len_training']/25,epoch* data._data['len_training']/100],
     decay_rate = [0],
-    L2 = [0.001,0,0.01,0.001,0.0001,0.00001]
+    L2 = [0.0,0.1,0.01,0.001,0.0001]
     )
     d = {}
     for k in dists:
@@ -66,11 +66,11 @@ def main():
 
     best_accuracy = 0.0
     for exp in range(1,200):
-        max_windows,win = get_par_arr([40,70,100]),get_par_arr([2,3,4,5])
-        data = Dataset(train_size=None,dev_size=None,test_size=Nonw,sent_len=sent_len,
+        max_windows,win = get_par_arr([70,100]),get_par_arr([2,3,4,5])
+        data = Dataset(train_size=10000,dev_size=None,test_size=None,sent_len=sent_len,
                         sent_numb=sent_numb, embedding_size=embedding_size,
                         max_windows=max_windows,win=win, ty_CN_NE ='NE')
-        batch_size = get_par_arr([128,512,128,64,32])
+        batch_size = get_par_arr([64,32,128])
         dr = get_par_arr([0.2,0.5,0.7,0.9])
         ## for sentence
         # par = get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size)

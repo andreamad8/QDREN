@@ -98,7 +98,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                 patient += 1
 
             # Early Stopping Condition
-            if patient > 15:
+            if patient > 3:
                 break
             sess.run(entity_net.epoch_increment)
 
