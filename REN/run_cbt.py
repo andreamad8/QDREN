@@ -30,7 +30,7 @@ def get_random_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = [data._data["vocab_size"]],
     label_num = [data._data["label_num"]],
-    num_blocks = [1],#,10,20,50,70,90],
+    num_blocks = [10,20,50],
     sent_len = [sent_len],
     sent_numb = [sent_numb],
     embedding_size = [embedding_size],
@@ -60,15 +60,16 @@ def get_par_arr(a):
 
 def main():
     embedding_size = 100
-    epoch = 1
+    epoch = 200
     sent_numb,sent_len = None,None
-    max_windows,win = 1,1
-    data = Dataset(train_size=4,dev_size=1,test_size=1,sent_len=sent_len,
-                    sent_numb=sent_numb, embedding_size=embedding_size,
-                    max_windows=max_windows,win=win, ty_CN_NE ='NE')
+
 
     best_accuracy = 0.0
-    for exp in range(1,2):
+    for exp in range(1,200):
+        max_windows,win = get_par_arr([40,70,100]),get_par_arr([2,3,4,5])
+        data = Dataset(train_size=None,dev_size=None,test_size=Nonw,sent_len=sent_len,
+                        sent_numb=sent_numb, embedding_size=embedding_size,
+                        max_windows=max_windows,win=win, ty_CN_NE ='NE')
         batch_size = get_par_arr([128,512,128,64,32])
         dr = get_par_arr([0.2,0.5,0.7,0.9])
         ## for sentence
@@ -81,7 +82,7 @@ def main():
         par['embeddings_mat'],par['batch_size'],par['dr']= '' ,batch_size,dr
         if (par['acc']>=best_accuracy):
             best_accuracy =par['acc']
-            send_email("CBT Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'%s in' % str(t[6]))
+            send_email("CBT NE Best Accuracy: %.3f par: %s" % (best_accuracy,str(par)),'%s in' % str(t[6]))
 
 
 if __name__ == '__main__':

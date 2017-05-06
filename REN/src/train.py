@@ -89,7 +89,8 @@ def train(epoch,batch_size, data,par,dr, _test):
             if val_acc[e] >= best_val:
                 best_val, patient = val_acc[e], 0
                 with open(ckpt_dir + "training_logs.pik", 'w') as f:
-                    pickle.dump((train_loss, train_acc, val_loss, val_acc), f)
+                    pickle.dump((train_loss, train_acc, val_loss, val_acc, test_loss, test_acc), f)
+                send_email("CBT NE Best Accuracy: %.3f " % (best_val), 'in %s' % str(ckpt_dir))
                 if (_test):
                     send_email(" Best Accuracy Test: %.3f \t Loss Test: %.3f" % (test_loss[e], test_acc[e]),'in %s' % str(ckpt_dir))
 
