@@ -154,7 +154,7 @@ class EntityNetwork():
             u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
             # Output Transformations => Logits
-            hidden = self.activation(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
+            hidden = sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 

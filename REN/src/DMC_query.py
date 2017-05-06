@@ -89,18 +89,18 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
                 state_j_next = state_j + tf.expand_dims(gate_j, -1) * candidate_j
 
                 # # Forget previous memories by normalization.
-                # state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
+                state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
                 # Equation 5: h_j <- h_j / \norm{h_j}
                 # Forget previous memories by normalization.
-                state_j_next_norm = tf.norm(tensor=state_j_next,
-                                            ord='euclidean',
-                                            axis=-1,
-                                            keep_dims=True)
-                state_j_next_norm = tf.where(
-                    tf.greater(state_j_next_norm, 0.0),
-                    state_j_next_norm,
-                    tf.ones_like(state_j_next_norm))
-                state_j_next = state_j_next / state_j_next_norm
+                # state_j_next_norm = tf.norm(tensor=state_j_next,
+                #                             ord='euclidean',
+                #                             axis=-1,
+                #                             keep_dims=True)
+                # state_j_next_norm = tf.where(
+                #     tf.greater(state_j_next_norm, 0.0),
+                #     state_j_next_norm,
+                #     tf.ones_like(state_j_next_norm))
+                # state_j_next = state_j_next / state_j_next_norm
 
 
                 next_states.append(state_j_next)
