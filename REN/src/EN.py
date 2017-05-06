@@ -28,6 +28,8 @@ class EntityNetwork():
         self.S = tf.placeholder(tf.int32, shape=[None,self.sent_numb,self.sent_len],name="Story")
         self.Q = tf.placeholder(tf.int32, shape=[None,1,self.sent_len],        name="Question")
         self.A = tf.placeholder(tf.int64, shape=[None],        name="Answer")
+        # self.C = tf.placeholder(tf.int32, shape=[None,self.label_num],name="Candidate")
+
         self.keep_prob = tf.placeholder(tf.float32, name= "dropout")
 
         self.batch_size = tf.shape(self.S)[0]
@@ -85,6 +87,7 @@ class EntityNetwork():
 
         # Create Memory Cell Keys
         if (self.trainable[2]):
+            candidate_E = tf.nn.embedding_lookup(self.E,self.C,max_norm=self.max_norm)
             self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size],
                         initializer=tf.constant_initializer(np.array(self.embeddings_mat[j])),
                         trainable=self.trainable[3]) for j in range(self.num_blocks)]

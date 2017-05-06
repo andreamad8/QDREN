@@ -49,7 +49,6 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         a = tf.reduce_sum(inputs * state_j, axis=1)
         b = tf.reduce_sum(inputs * tf.expand_dims(key_j, 0), axis=1)
         c = tf.reduce_sum(inputs * tf.squeeze(self._q), axis=1)
-
         return tf.nn.sigmoid(a + b + c)
 
     def get_candidate(self, state_j, key_j, inputs, U, V, W, b):
@@ -74,8 +73,9 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
 
             b = tf.get_variable('biasU',[self._num_units_per_block])
-
+            # self._q = tf.Print(self._q, [self._q],summarize=10)
             # TODO: layer norm?
+
 
             state = tf.split(state, self._num_blocks, 1)
             next_states = []
