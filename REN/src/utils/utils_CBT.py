@@ -6,35 +6,80 @@ import logging
 from collections import Counter
 import re
 from iteration_utilities import flatten
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 class Dataset():
     def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win,ty_CN_NE):
         self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows=max_windows, win=win,ty_CN_NE=ty_CN_NE)
-    def get_minibatches(self,n, minibatch_size, shuffle=True):
-        idx_list = np.arange(0, n, minibatch_size)
-        if shuffle:
-            np.random.shuffle(idx_list)
-        minibatches = []
-        for idx in idx_list:
-            minibatches.append(np.arange(idx, min(idx + minibatch_size, n)))
-        return minibatches
+        self.num_batches=0
 
-    def gen_examples(self,batch_size,tip):
+    def make_batches(self,size, batch_size):
+        """Returns a list of batch indices (tuples of indices).
+        # Arguments
+            size: Integer, total size of the data to slice into batches.
+            batch_size: Integer, batch size.
+        # Returns
+            A list of tuples of array indices.
         """
-            Divide examples into batches of size `batch_size`.
-        """
-        minibatches = self.get_minibatches(len(self._data[tip]['S']), batch_size)
-        all_ex = []
-        for minibatch in minibatches:
-            mb_x1 = [self._data[tip]['S'][t] for t in minibatch]
-            mb_x2 = [self._data[tip]['Q'][t] for t in minibatch]
-            mb_y =  [self._data[tip]['A'][t] for t in minibatch]
-            mb_c =  [self._data[tip]['C'][t] for t in minibatch]
+        self.num_batches = int(np.ceil(size / float(batch_size)))
+        return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(0, self.num_batches)]
 
-            all_ex.append((np.array(mb_x1), np.array(mb_x2), np.array(mb_y)))
-        return all_ex
+    def unison_shuffled_copies(self,a, b,c):
+        assert len(a) == len(b)
+        p = np.random.permutation(len(a))
+        return a[p], b[p], c[p]
+
+    def get_batch(self,batch_size,data):
+        randomize = np.arange(len(self._data[data]['S']))
+        np.random.shuffle(randomize)
+        self._data[data]['S'] = self._data[data]['S'][randomize]
+        self._data[data]['Q'] = self._data[data]['Q'][randomize]
+        self._data[data]['A'] = self._data[data]['A'][randomize]
+        return self.make_batches(len(self._data[data]['S']), batch_size)
+
+    def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j,dr):
+        return {S_input:self._data['train']['S'][i:j],
+                Q_input:self._data['train']['Q'][i:j],
+                A_input:self._data['train']['A'][i:j],
+                keep_prob:dr}
+
+    def get_dic_val_test(self,S_input,Q_input,A_input,keep_prob,i,j,ty):
+        return {S_input:self._data[ty]['S'][i:j],
+                Q_input:self._data[ty]['Q'][i:j],
+                A_input:self._data[ty]['A'][i:j],
+                keep_prob:1.0}
+
+    # def get_dic_test(self,S_input,Q_input,A_input,keep_prob,i,j):
+    #     return {S_input:self._data['test']['S'][i:j],
+    #             Q_input:self._data['test']['Q'][i:j],
+    #             A_input:self._data['test']['A'][i:j],
+    #             keep_prob:1.0}
+    #
+
+    # def get_minibatches(self,n, minibatch_size, shuffle=True):
+    #     idx_list = np.arange(0, n, minibatch_size)
+    #     if shuffle:
+    #         np.random.shuffle(idx_list)
+    #     minibatches = []
+    #     for idx in idx_list:
+    #         minibatches.append(np.arange(idx, min(idx + minibatch_size, n)))
+    #     return minibatches
+    #
+    # def gen_examples(self,batch_size,tip):
+    #     """
+    #         Divide examples into batches of size `batch_size`.
+    #     """
+    #     minibatches = self.get_minibatches(len(self._data[tip]['S']), batch_size)
+    #     all_ex = []
+    #     for minibatch in minibatches:
+    #         mb_x1 = [self._data[tip]['S'][t] for t in minibatch]
+    #         mb_x2 = [self._data[tip]['Q'][t] for t in minibatch]
+    #         mb_y =  [self._data[tip]['A'][t] for t in minibatch]
+    #         mb_c =  [self._data[tip]['C'][t] for t in minibatch]
+    #
+    #         all_ex.append((np.array(mb_x1), np.array(mb_x2), np.array(mb_y)))
+    #     return all_ex
 
 
 
@@ -120,7 +165,7 @@ def load_data(in_file, max_example=None):
                 break
             line = str.lower(line)
             nid, line = line.split(' ', 1)
-            sent = tokenize(line[:-2])
+            sent = line.rstrip().split(' ')
             story.append(sent)
         line = f.readline()
         if not line:
@@ -128,7 +173,8 @@ def load_data(in_file, max_example=None):
         line = str.lower(line)
         nid, line = line.split(' ', 1)
         line = line.split('\t')
-        q = tokenize(line[0])
+        q = line[0].rstrip().split(' ')
+
         documents.append(story)
         questions.append(q)
         answer.append(line[1])
@@ -143,7 +189,7 @@ def load_data(in_file, max_example=None):
     return (documents, questions, answer, candidates)
 
 
-def build_dict(sentences,win=None, max_words=50000):
+def build_dict(sentences,win=None, max_words=60000):
     """
         Build a dictionary for the words in `sentences`.
         Only the max_words ones are kept and the remaining will be mapped to <UNK>.
@@ -172,13 +218,13 @@ def build_dict(sentences,win=None, max_words=50000):
     # leave 1 to delimiter |||
     return {w[0]: index + 1 for (index, w) in enumerate(ls)}
 
-def tokenize(sent):
-    '''Return the tokens of a sentence including punctuation.
-    >>> tokenize('Bob dropped the apple. Where is the apple?')
-    ['Bob', 'dropped', 'the', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']
-    '''
-    return [x.strip() for x in re.split('(\W+)', sent) if x.strip()]
-
+# def tokenize(sent):
+#     '''Return the tokens of a sentence including punctuation.
+#     >>> tokenize('Bob dropped the apple. Where is the apple?')
+#     ['Bob', 'dropped', 'the', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']
+#     '''
+#     return [x.strip() for x in re.split('(\W+)', sent) if x.strip()]
+#
 
 def gen_embeddings(word_dict, dim, in_file=None,
                    init=None):
@@ -189,7 +235,8 @@ def gen_embeddings(word_dict, dim, in_file=None,
     """
 
     num_words = max(word_dict.values()) + 1
-    embeddings = np.zeros((num_words, dim))
+    # embeddings = np.zeros((num_words, dim))
+    embeddings = np.random.standard_normal(size=(num_words, dim))
     logging.info('Embeddings: %d x %d' % (num_words, dim))
 
     if in_file is not None:
@@ -247,7 +294,7 @@ def vectorize_window(examples, word_dict, max_windows=10, win=2):
     in_x2 = []
     in_y = []
     in_c = []
-
+    # stat_len =[]
     for idx, (d, q, a, c) in enumerate(zip(examples[0], examples[1], examples[2], examples[3])):
         d_windows = []
         d = list(flatten(d))
@@ -261,6 +308,7 @@ def vectorize_window(examples, word_dict, max_windows=10, win=2):
             if(d[i] in c):
                 d_windows.append([word_dict[w] if w in word_dict else 0 for w in d[i-win:i+win+1]])
 
+        # stat_len.append(len(d_windows))
         # pad to max_windows
         lm = max(0, max_windows - len(d_windows))
         for _ in range(lm):
@@ -271,9 +319,11 @@ def vectorize_window(examples, word_dict, max_windows=10, win=2):
             if(q[i] == 'xxxxx'):
                 q_windows = [word_dict[w] if w in word_dict else 0 for w in q[i-win:i+win+1]]
 
-        in_x1.append(d_windows)
-        in_x2.append(q_windows)
-        in_y.append(c.index(a))
-        in_c.append([word_dict[w] if w in word_dict else 0 for w in c])
+        if (len(d_windows) > 0) and (len(q_windows) > 0):
+            in_x1.append(d_windows)
+            in_x2.append(q_windows)
+            in_y.append(c.index(a))
+            in_c.append([word_dict[w] if w in word_dict else 0 for w in c])
 
+    # logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
     return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), np.array(in_y), np.array(in_c)

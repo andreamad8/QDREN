@@ -5,6 +5,18 @@ import numpy as np
 import tensorflow as tf
 import functools
 
+
+def prelu_func(features, initializer=None, scope=None):
+    """
+    Implementation of [Parametric ReLU](https://arxiv.org/abs/1502.01852) borrowed from Keras.
+    """
+    with tf.variable_scope(scope, 'PReLU', initializer=initializer):
+        alpha = tf.get_variable('alpha', features.get_shape().as_list()[1:])
+        pos = tf.nn.relu(features)
+        neg = alpha * (features - tf.abs(features)) * 0.5
+        return pos + neg
+prelu = functools.partial(prelu_func, initializer=tf.constant_initializer(1.0))
+
 class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
     """
     Implementation of a dynamic memory cell as a gated recurrent network.
@@ -12,7 +24,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
     """
 
     def __init__(self, num_blocks, num_units_per_block, keys, query_embedding,
-                activation = None,
+                activation = prelu,
                 initializer=tf.random_normal_initializer(stddev=0.1)):
         self._num_blocks = num_blocks # M
         self._num_units_per_block = num_units_per_block # d
@@ -48,10 +60,10 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         """
         a = tf.reduce_sum(inputs * state_j, axis=1)
         b = tf.reduce_sum(inputs * tf.expand_dims(key_j, 0), axis=1)
-        c = tf.reduce_sum(inputs * tf.squeeze(self._q), axis=1)
-        return tf.nn.sigmoid(a + b + c)
+        # c = tf.reduce_sum(inputs * tf.squeeze(self._q), axis=1)
+        return tf.nn.sigmoid(a + b)
 
-    def get_candidate(self, state_j, key_j, inputs, U, V, W, b):
+    def get_candidate(self, state_j, key_j, inputs, U, V, W):
         """
         Represents the new memory candidate that will be weighted by the
         gate value and combined with the existing memory. Equation 3:
@@ -59,20 +71,25 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
         h_j^~ <- \phi(U h_j + V w_j + W s_t)
         """
         key_V = tf.matmul(tf.expand_dims(key_j, 0), V)
-        state_U = tf.matmul(state_j, U) + b
+        state_U = tf.matmul(state_j, U)
         inputs_W = tf.matmul(inputs, W)
-        return self._activation(state_U + key_V + inputs_W)
+        return state_U + key_V + inputs_W
 
     def __call__(self, inputs, state, scope=None):
         with tf.variable_scope(scope or type(self).__name__, initializer=self._initializer):
             # Split the hidden state into blocks (each U, V, W are shared across blocks).
 
-            U = tf.get_variable('U', [self._num_units_per_block, self._num_units_per_block],
-                                initializer=tf.orthogonal_initializer(gain=1.0))
-            V = tf.get_variable('V', [self._num_units_per_block, self._num_units_per_block])
-            W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
+            # U = tf.get_variable('U', [self._num_units_per_block, self._num_units_per_block],
+            #                     initializer= tf.constant_initializer(np.identity(self._num_units_per_block)),
+            #                     trainable = False)
+            # W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block],
+            #                     initializer = tf.constant_initializer(np.zeros(self._num_units_per_block, self._num_units_per_block)),
+            #                     trainable = False)
+            # V = tf.get_variable('V', [self._num_units_per_block, self._num_units_per_block],
+            #                     initializer = tf.constant_initializer(np.zeros(self._num_units_per_block, self._num_units_per_block)),
+            #                     trainable = False)
 
-            b = tf.get_variable('biasU',[self._num_units_per_block])
+            # b = tf.get_variable('biasU',[self._num_units_per_block])
             # self._q = tf.Print(self._q, [self._q],summarize=10)
             # TODO: layer norm?
 
@@ -82,25 +99,14 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             for j, state_j in enumerate(state): # Hidden State (j)
                 key_j = self._keys[j]
                 gate_j = self.get_gate(state_j, key_j, inputs)
-                candidate_j = self.get_candidate(state_j, key_j, inputs, U, V, W, b)
+                candidate_j = inputs
 
                 # Equation 4: h_j <- h_j + g_j * h_j^~
                 # Perform an update of the hidden state (memory).
                 state_j_next = state_j + tf.expand_dims(gate_j, -1) * candidate_j
 
                 # # Forget previous memories by normalization.
-                state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
-                # Equation 5: h_j <- h_j / \norm{h_j}
-                # Forget previous memories by normalization.
-                # state_j_next_norm = tf.norm(tensor=state_j_next,
-                #                             ord='euclidean',
-                #                             axis=-1,
-                #                             keep_dims=True)
-                # state_j_next_norm = tf.where(
-                #     tf.greater(state_j_next_norm, 0.0),
-                #     state_j_next_norm,
-                #     tf.ones_like(state_j_next_norm))
-                # state_j_next = state_j_next / state_j_next_norm
+                # state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
 
 
                 next_states.append(state_j_next)

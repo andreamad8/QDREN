@@ -1,9 +1,10 @@
 from __future__ import print_function
-from DMC_query import DynamicMemoryCell
+from memories.DMC_simple import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
 from functools import partial
+import logging
 
 
 class EntityNetwork():
@@ -52,10 +53,11 @@ class EntityNetwork():
         self.train_op = self.train()
 
         # Create operations for computing the accuracy
-        correct_prediction = tf.equal(tf.argmax(self.logits, 1),self.A)
-        self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="Accuracy")
+        self.correct_prediction = tf.equal(tf.argmax(self.logits, 1),self.A)
+        self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32), name="Accuracy")
 
-
+        parameters = self.count_parameters()
+        logging.info('Parameters: {}'.format(parameters))
 
     def instantiate_weights(self):
         """
@@ -74,10 +76,10 @@ class EntityNetwork():
         # zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
         # self.E = E * zero_mask
 
-        alpha = tf.get_variable(name='alpha',
-                                shape=self.embedding_size,
-                                initializer=tf.constant_initializer(1.0))
-        self.activation = partial(prelu, alpha=alpha)
+        # alpha = tf.get_variable(name='alpha',
+        #                         shape=self.embedding_size,
+        #                         initializer=tf.constant_initializer(1.0))
+        # self.activation = partial(prelu, alpha=alpha)
 
         # Create Learnable Mask
         self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, self.embedding_size],
@@ -86,13 +88,13 @@ class EntityNetwork():
                                           initializer=tf.constant_initializer(1.0),trainable=True)
 
         # Create Memory Cell Keys
-        if (self.trainable[2]):
-            candidate_E = tf.nn.embedding_lookup(self.E,self.C,max_norm=self.max_norm)
-            self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size],
-                        initializer=tf.constant_initializer(np.array(self.embeddings_mat[j])),
-                        trainable=self.trainable[3]) for j in range(self.num_blocks)]
-        else:
-            self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size]) for j in range(self.num_blocks)]
+        # if (self.trainable[2]):
+        #     # candidate_E = tf.nn.embedding_lookup(self.E,self.C,max_norm=self.max_norm)
+        #     self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size],
+        #                 initializer=tf.constant_initializer(np.array(self.embeddings_mat[j])),
+        #                 trainable=self.trainable[3]) for j in range(self.num_blocks)]
+        # else:
+        self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size]) for j in range(self.num_blocks)]
 
 
         if (not self.no_out):
@@ -109,7 +111,7 @@ class EntityNetwork():
 
         # Story Input Encoder
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
-        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
+        # story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)
         story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 
@@ -124,7 +126,7 @@ class EntityNetwork():
 
         # Create Memory Cell
         self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size,
-                                      self.keys, query_embedding, self.activation)
+                                      self.keys, query_embedding)
         # self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
 
         # Send Story through Memory Cell
@@ -162,7 +164,7 @@ class EntityNetwork():
         """
         Build loss computation - softmax cross-entropy between logits, and correct answer.
         """
-        if(self.L2 !=0):
+        if(self.L2 !=0.0):
             lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in tf.trainable_variables() if 'rnn/DynamicMemoryCell/biasU:0' != v.name ])  * self.L2
             # lossL2 = tf.add_n([ tf.nn.l2_loss(v) for v in var])  * self.L2
             return tf.losses.sparse_softmax_cross_entropy(self.A,self.logits)+lossL2
@@ -201,6 +203,12 @@ class EntityNetwork():
                 encoding[i-1, j-1] = (i - (le-1)/2) * (j - (ls-1)/2)
         encoding = 1 + 4 * encoding / embedding_size / sentence_size
         return np.transpose(encoding)
+
+    def count_parameters(self):
+        "Count the number of parameters listed under TRAINABLE_VARIABLES."
+        num_parameters = sum([np.prod(tvar.get_shape().as_list())
+                              for tvar in tf.trainable_variables()])
+        return num_parameters
 
 def prelu(features, alpha, scope=None):
     """
