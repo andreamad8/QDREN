@@ -38,7 +38,7 @@ def train(epoch,batch_size, data,par,dr, _test):
 
     def init():
         # Setup Checkpoint + Log Paths
-        ckpt_dir = "checkpoints/CNN{}/".format(datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y").replace(":", "").replace(" ", ""))
+        ckpt_dir = "checkpoints/CBT{}/".format(datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y").replace(":", "").replace(" ", ""))
         if not os.path.exists(ckpt_dir):
             os.mkdir(ckpt_dir)
         # Initialize all Variables
@@ -89,7 +89,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                 patient += 1.0
 
             # Early Stopping Condition
-            if patient > 3.0:
+            if patient > 10.0:
                 break
             sess.run(entity_net.epoch_increment)
 

@@ -103,7 +103,7 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
                 # Equation 5: h_j <- h_j / \norm{h_j}
                 state_j_next = tf.nn.l2_normalize(state_j_next, -1) # TODO: Is epsilon necessary?
 
-                
+
                 # Forget previous memories by normalization.
                 # state_j_next_norm = tf.norm(tensor=state_j_next,
                 #                             ord='euclidean',

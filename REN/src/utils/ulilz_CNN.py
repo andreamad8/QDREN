@@ -291,7 +291,7 @@ def vectorize(examples, word_dict, entity_dict, max_s_len, max_s_numb,
     # logging.info('Max wxse:{}\t Avg wxse: {} Std wxse:{}'.format(max(stat_wordxsent),sum(stat_wordxsent)/len(stat_wordxsent),np.std(stat_wordxsent)))
 
     # def len_argsort(seq):
-    #     return sorted(range(len(seq)), key=lambda x: len(seq[x]))
+    #     return sorted(range(len(flatten(seq))), key=lambda x: len(flatten(seq)[x]))
     #
     # if sort_by_len:
     #     # sort by the document length

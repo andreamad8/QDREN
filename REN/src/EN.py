@@ -1,5 +1,5 @@
 from __future__ import print_function
-from memories.DMC_simple import DynamicMemoryCell
+from memories.DMC_query import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
@@ -111,7 +111,7 @@ class EntityNetwork():
 
         # Story Input Encoder
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
-        # story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
+        story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)
         story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 

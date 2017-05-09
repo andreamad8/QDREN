@@ -30,20 +30,20 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 10,
+    num_blocks = 20,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"],
-    learning_rate= 0.001,
+    learning_rate= 0.01,
     clip_gradients= -10.0,
-    opt = 'Adam',
-    trainable = [0,0,0,0],
+    opt = 'RSMprop',
+    trainable = [1,1,0,0],
     max_norm = None,
     no_out = False,
     decay_steps = 0,
     decay_rate = 0,
-    L2 = 0.001
+    L2 = 0.0001
     )
     return dists
 
@@ -51,10 +51,10 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 def main():
     embedding_size = 100
     epoch = 200
-    sent_numb,sent_len =  50,30
-    max_windows,win =None,None
-    batch_size = 32
-    dr = 0.2
+    sent_numb,sent_len =  None,None
+    max_windows,win =150,4
+    batch_size = 64
+    dr = 0.5
     data = Dataset(train_size=1000,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)

@@ -32,7 +32,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size, params):
     vocab_size = data._data["vocab_size"],label_num = data._data["label_num"],
     sent_len = sent_len, sent_numb = sent_numb, embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"], clip_gradients= 40.0,
-    max_norm = None, no_out = False, decay_steps = 0, decay_rate = 0, opt = 'Adam',
+    max_norm = None, no_out = False, decay_steps = 0, decay_rate = 0, opt = 'SGD',
     num_blocks = params['nb'],
     learning_rate= params['lr'],
     trainable = params['tr'],
@@ -82,22 +82,22 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size, params):
 def main():
     embedding_size = 100
     max_windows = 100
-    epoch = 2
+    epoch = 300
     best_accuracy = 0.0
     grind_ris={}
-    file_grid = "data/grid/grid_simple_CBT_NE_SIMPLE.pik"
-    param_grid = {'nb': [10],
-                  'lr': [0.001,0.0001],
-                  'tr': [[1,1,0,0],[1,0,0,0],[0,0,0,0]],
-                  'L2': [0.0],# [0.0,0.1,0.01,0.001,0.0001]
-                  'w' : [3,4,5],
-                  'bz': [32,64],
+    file_grid = "data/grid/TEST_BEST_NORMAL.pik"
+    param_grid = {'nb': [20],
+                  'lr': [0.001],
+                  'tr': [[1,1,0,0]],
+                  'L2': [0.001],# [0.0,0.1,0.01,0.001,0.0001]
+                  'w' : [3],
+                  'bz': [32],
                   'dr': [1.0],
                   }
     grid = list(ParameterGrid(param_grid))
     np.random.shuffle(grid)
     for params in list(grid):
-        data = Dataset(train_size=1,dev_size=1,test_size=1,
+        data = Dataset(train_size=None,dev_size=None,test_size=None,
                         sent_len=None,sent_numb=None, embedding_size=embedding_size,
                         max_windows=max_windows,win=params['w'], ty_CN_NE ='NE')
 
@@ -108,20 +108,18 @@ def main():
         par = get_parameters(data,epoch,(params['w']*2)+1,
                             max_windows,embedding_size, params)
 
-        t = train(epoch,params['bz'], data, par, dr=params['w'], _test=False)
+        t = train(epoch,params['bz'], data, par, dr=params['w'], _test=True)
 
         acc = sorted([v for k,v in t[3].items()])[-1]
 
         if (acc > best_accuracy):
             best_accuracy = acc
-            with open(file_grid, 'w') as f:
-                pickle.dump((grind_ris), f)
-            send_email("CBT NE Best Accuracy SIMPLE: %.3f \t PAR: %s" % (best_accuracy,str(params)),'in %s' % str(t[6]))
+            send_email("TEST_BEST_NORMAL: %.3f \t PAR: %s" % (best_accuracy,str(params)),'in %s' % str(t[6]))
 
         grind_ris[str(params)] = acc
 
-    with open(file_grid, 'w') as f:
-        pickle.dump((grind_ris), f)
+        with open(file_grid, 'w') as f:
+            pickle.dump((grind_ris), f)
 
 
 if __name__ == '__main__':
