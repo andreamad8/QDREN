@@ -26,7 +26,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                    entity_net.A:mb_y, entity_net.keep_prob:1.0}
             curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
             _loss_val, _acc_val, _counter = _loss_val + curr_loss_val, _acc_val + curr_acc_val, _counter + 1
-        logging.info("%s Loss: %.3f\t %s Accuracy: %.3f" % (ty,_loss_val / float(_counter),ty, _acc_val/float(_counter)))
+        logging.info("Epoch %d\t\t%s Loss: %.3f\t %s Accuracy: %.3f" % (e,ty,_loss_val / float(_counter),ty, _acc_val/float(_counter)))
         return _loss_val / float(_counter), _acc_val/float(_counter)
 
     def tr(verbose):
@@ -64,21 +64,22 @@ def train(epoch,batch_size, data,par,dr, _test):
         all_train = data.gen_examples(batch_size,'train')
         all_val   = data.gen_examples(batch_size,'val')
         all_test  = data.gen_examples(batch_size,'test')
-        best_val,patient= 0.0, 0
+        best_val,patient= 0.0, 0.0
         for e in range(curr_epoch,epoch):
-            train_loss[e], train_acc[e] = tr(10)
+            train_loss[e], train_acc[e] = tr(20)
             val_loss[e], val_acc[e] = val_test(all_val,'Validation')
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')
             # Update best_val
-            if val_acc[e] >= best_val:
+            if val_acc[e] > best_val:
                 best_val, patient = val_acc[e], 0
-
+            elif val_acc[e] > best_val:
+                patient += 0.5
             else:
-                patient += 1
+                patient += 1.0
 
             # Early Stopping Condition
-            if patient > 15:
+            if patient > 15.0:
                 break
             sess.run(entity_net.epoch_increment)
 

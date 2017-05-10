@@ -40,7 +40,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size, params):
 
 def main(task_num,sample_size=''):
     embedding_size = 100
-    epoch = 1
+    epoch = 300
     best_accuracy = 0.0
     grind_ris={}
 
@@ -48,8 +48,8 @@ def main(task_num,sample_size=''):
         os.makedirs('data/ris/task_{}'.format(task_num))
 
     param_grid = {'nb': [20],
-                  'lr': [0.001],
-                  'tr': [[1,1,0,0]],
+                  'lr': [0.001,0.0001],
+                  'tr': [[1,1,0,0],[0,0,0,0]],
                   'L2': [0.0],# [0.0,0.1,0.01,0.001,0.0001]
                   'bz': [32],
                   'dr': [0.5],
@@ -64,14 +64,14 @@ def main(task_num,sample_size=''):
         par = get_parameters(data,epoch,data._data['sent_len'],data._data['sent_numb'],embedding_size,params)
         t = train(epoch,params['bz'], data, par, dr=params['dr'], _test=True)
 
-        acc = sorted([v for k,v in t[3].items()])[-1]
+        acc = sorted([v for k,v in t[5].items()])[-1]
 
         if (acc > best_accuracy):
             best_accuracy = acc
 
         grind_ris[str(params)] = acc
 
-        f_save = 'data/ris/task_{}/{}.PIK'.format(task_num,str(params))
+        f_save = 'data/ris/task_{}/{}.PIK'.format(task_num,str(params)+str(acc))
         with open(f_save, 'w') as f:
             pickle.dump((t), f)
 
