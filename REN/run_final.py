@@ -7,9 +7,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.ulilz_CNN import Dataset
+from src.utils.ulilz_CNN import Dataset
 from src.EN import EntityNetwork
-from src.train import train
+from src.trainer.train import train
 import numpy as np
 import tensorflow as tf
 import tflearn
@@ -37,7 +37,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     embeddings_mat = data._data["embeddings_mat"],
     learning_rate= 0.01,
     clip_gradients= -10.0,
-    opt = 'RSMprop',
+    opt = 'RMSProp',
     trainable = [1,1,0,0],
     max_norm = None,
     no_out = False,
@@ -55,14 +55,14 @@ def main():
     max_windows,win =150,4
     batch_size = 64
     dr = 0.5
-    data = Dataset(train_size=1000,dev_size=None,test_size=None,sent_len=sent_len,
+    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
     ## for sentence
-    par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+    # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
     ## for windows
-    # par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
+    par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
     logging.info(par)
     t = train(epoch,batch_size, data, par, dr=dr, _test=True)
 

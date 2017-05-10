@@ -21,7 +21,7 @@ def import_data(filename):
 
 data_1k=[]
 for filename in os.listdir('../ris/'):
-    if('1K.txt'in filename):
+    if('10K.txt'in filename):
         if(filename[6:7]=='_'):
             data_1k.append([int(filename[5:6]),import_data('../ris/'+filename)])
         else:
