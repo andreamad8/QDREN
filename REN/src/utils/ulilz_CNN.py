@@ -83,13 +83,13 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
     logging.info('Load data files..')
 
     logging.info('*' * 10 + ' Train')
-    train_examples = load_data('data/train.txt', train_size, relabeling=True)
+    train_examples = load_data('data/dailymail/train.txt', train_size, relabeling=True)
 
     logging.info('*' * 10 + ' Dev')
-    dev_examples = load_data('data/dev.txt', dev_size, relabeling=True)
+    dev_examples = load_data('data/dailymail/dev.txt', dev_size, relabeling=True)
 
     logging.info('*' * 10 + ' Test')
-    test_examples = load_data('data/test.txt', test_size, relabeling=True)
+    test_examples = load_data('data/dailymail/test.txt', test_size, relabeling=True)
 
 
     num_train = len(train_examples[0])
@@ -193,11 +193,11 @@ def load_data(in_file, max_example=None, relabeling=True):
             question = ' '.join(q_words)
             document = ' '.join(d_words)
 
-        if (entity_id <=50):
-            questions.append(question)
-            answers.append(answer)
-            documents.append(document)
-            num_examples += 1
+        #if (entity_id <=50):
+        questions.append(question)
+        answers.append(answer)
+        documents.append(document)
+        num_examples += 1
 
         f.readline()
         if (max_example is not None) and (num_examples >= max_example):
@@ -317,7 +317,7 @@ def vectorize_window(examples, word_dict, entity_dict, max_windows, win):
     in_l = np.zeros((len(examples[0]), len(entity_dict)))
     in_y = []
 
-    stat_len =[]
+    #stat_len =[]
     for idx, (d, q, a) in enumerate(zip(examples[0], examples[1], examples[2])):
         d_windows = []
         ## vectorize_window document
@@ -334,7 +334,7 @@ def vectorize_window(examples, word_dict, entity_dict, max_windows, win):
             if(d_words[i] in entity_dict):
                 d_windows.append([word_dict[w] if w in word_dict else 0 for w in d_words[i-win:i+win+1]])
 
-        stat_len.append(len(d_windows))
+        #stat_len.append(len(d_windows))
         # pad to max_windows
         lm = max(0, max_windows - len(d_windows))
         for _ in range(lm):
@@ -349,7 +349,7 @@ def vectorize_window(examples, word_dict, entity_dict, max_windows, win):
         in_l[idx, [entity_dict[w] for w in d_words if w in entity_dict]] = 1.0
         in_y.append(entity_dict[a] if a in entity_dict else 0)
 
-    logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
+    #logging.info('Max sent:{}\t Avg sent: {} Std sent:{}'.format(max(stat_len),sum(stat_len)/len(stat_len),np.std(stat_len)))
 
 
     return np.array(in_x1), np.expand_dims(np.array(in_x2), axis=1), in_l, np.array(in_y)
