@@ -40,19 +40,25 @@ for j in range(1):
 
     loss_train = [v for k,v in data[0].items()]
     loss_val = [v for k,v in data[2].items()]
+    loss_test = [v for k,v in data[4].items()]
+
     acc_train = [v for k,v in data[1].items()]
     acc_val = [v for k,v in data[3].items()]
-    print(len(data))
-    print(len(loss_train))
+    acc_test = [v for k,v in data[5].items()]
+
     print('loss_train:'+ str(max(loss_train)))
     print('loss_val:'+ str(max(loss_val)))
+    print('loss_test:'+ str(max(loss_test)))
     print('acc_train:'+ str(max(acc_train)))
     print('acc_val:'+ str(max(acc_val)))
+    print('acc_test:'+ str(max(acc_test)))
 
     ax1 = fig.add_subplot(2, 1, 1)
     # ax1.set_xlim([0,20])
     plt.plot(loss_train, label=str(i))
     plt.plot(loss_val)
+    plt.plot(loss_test)
+
 
     # ax2 = fig.add_subplot(2, 2, 2)
     # ax2.set_xlim([0,20])
@@ -62,6 +68,8 @@ for j in range(1):
     # ax3.set_xlim([0,20])
     plt.plot(acc_train)
     plt.plot(acc_val)
+    plt.plot(acc_test)
+
 
     # ax4 = fig.add_subplot(2, 2, 4)
     # ax4.set_xlim([0,20])
