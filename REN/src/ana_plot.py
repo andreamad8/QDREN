@@ -33,48 +33,52 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='Times-Roman')
 sns.set_style(style='white')
 color = sns.color_palette("Set2", 10)
-fig = plt.figure(figsize=(13,10))
+fig = plt.figure(figsize=(10,10))
 i=1
 for j in range(1):
     data = pickle.load( open('checkpoints/training_logs.pik'.format(j), "rb" ) )
 
     loss_train = [v for k,v in data[0].items()]
     loss_val = [v for k,v in data[2].items()]
-    loss_test = [v for k,v in data[4].items()]
+    # loss_test = [v for k,v in data[4].items()]
 
     acc_train = [v for k,v in data[1].items()]
     acc_val = [v for k,v in data[3].items()]
-    acc_test = [v for k,v in data[5].items()]
+    # acc_test = [v for k,v in data[5].items()]
 
-    print('loss_train:'+ str(max(loss_train)))
-    print('loss_val:'+ str(max(loss_val)))
-    print('loss_test:'+ str(max(loss_test)))
+    print('loss_train:'+ str(min(loss_train)))
+    print('loss_val:'+ str(min(loss_val)))
+    # print('loss_test:'+ str(min(loss_test)))
     print('acc_train:'+ str(max(acc_train)))
     print('acc_val:'+ str(max(acc_val)))
-    print('acc_test:'+ str(max(acc_test)))
+    # print('acc_test:'+ str(max(acc_test)))
 
     ax1 = fig.add_subplot(2, 1, 1)
+    plt.title("Loss")
     # ax1.set_xlim([0,20])
-    plt.plot(loss_train, label=str(i))
-    plt.plot(loss_val)
-    plt.plot(loss_test)
+    plt.plot(loss_train,linewidth=1.95, alpha=0.7, color='gray',label='Training')
+    plt.plot(loss_val,linewidth=1.95,linestyle='--',alpha=0.7, color='red',label='Validation')
+    # plt.plot(loss_test)
+    ax1.set_ylabel("Loss")
+    ax1.set_xlabel("Epoch")
 
 
-    # ax2 = fig.add_subplot(2, 2, 2)
-    # ax2.set_xlim([0,20])
-    # ax2.set_ylim([0,4])
+    ax2 = fig.add_subplot(2, 1, 2)
+    plt.title("Accuracy")
 
-    ax3 = fig.add_subplot(2, 1, 2)
     # ax3.set_xlim([0,20])
-    plt.plot(acc_train)
-    plt.plot(acc_val)
-    plt.plot(acc_test)
+    plt.plot(acc_train,linewidth=1.95, alpha=0.7, color='gray',label='Training')
+    plt.plot(acc_val,linewidth=1.95,linestyle='--',alpha=0.7, color='red',label='Validation')
+    # plt.plot(acc_test)
+    ax2.set_ylabel("Accuracy")
+    ax2.set_xlabel("Epoch")
 
 
     # ax4 = fig.add_subplot(2, 2, 4)
     # ax4.set_xlim([0,20])
-    ax1.legend(loc='lower center', bbox_to_anchor=(0.50, 0.43), bbox_transform=plt.gcf().transFigure)
+    ax1.legend(loc='best')
     i+=1
+# plt.savefig('checkpoints/data/FINAL_RIS/CNN_WIND_MULTI_Q/multiQ.pdf', format='pdf', dpi=300)
 plt.show()
 
 
