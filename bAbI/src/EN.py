@@ -73,13 +73,13 @@ class EntityNetwork():
         else:
             self.E = tf.get_variable("Embedding",[self.vocab_size, self.embedding_size], initializer=self.init)
 
-        # zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
-        # self.E = E * zero_mask
+        zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
+        self.E = self.E * zero_mask
 
-        # alpha = tf.get_variable(name='alpha',
-        #                         shape=self.embedding_size,
-        #                         initializer=tf.constant_initializer(1.0))
-        # self.activation = partial(prelu, alpha=alpha)
+        alpha = tf.get_variable(name='alpha',
+                                shape=self.embedding_size,
+                                initializer=tf.constant_initializer(1.0))
+        self.activation = partial(prelu, alpha=alpha)
 
         # Create Learnable Mask
         self.story_mask = tf.get_variable("Story_Mask", [self.sent_len, self.embedding_size],
@@ -113,12 +113,12 @@ class EntityNetwork():
         story_embeddings = tf.nn.embedding_lookup(self.E, self.S,max_norm=self.max_norm) # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.nn.dropout(story_embeddings, self.keep_prob)               # Shape: [None, story_len, sent_len, embed_sz]
         story_embeddings = tf.multiply(story_embeddings, self.story_mask)
-        story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
+        self.story_embeddings = tf.reduce_sum(story_embeddings, axis=[2])                     # Shape: [None, story_len, embed_sz]
 
         # Query Input Encoder
         query_embedding = tf.nn.embedding_lookup(self.E, self.Q,max_norm=self.max_norm)  # Shape: [None, sent_len, embed_sz]
         query_embedding = tf.multiply(query_embedding, self.query_mask)                  # Shape: [None, sent_len, embed_sz]
-        query_embedding = tf.reduce_sum(query_embedding, axis=[2])                       # Shape: [None, 1, embed_sz]
+        self.query_embedding = tf.reduce_sum(query_embedding, axis=[2])                       # Shape: [None, 1, embed_sz]
 
         ## to input into a dynacmicRNN we need to specify the lenght of each sentence
         # length = tf.cast(tf.reduce_sum(tf.sign(tf.reduce_max(tf.abs(self.S), axis=2)), axis=1), tf.int32)
@@ -126,12 +126,12 @@ class EntityNetwork():
 
         # Create Memory Cell
         self.cell = DynamicMemoryCell(self.num_blocks, self.embedding_size,
-                                      self.keys, query_embedding)
+                                      self.keys, self.query_embedding)
         # self.cell =tf.contrib.rnn.DropoutWrapper(self.cell, output_keep_prob=self.keep_prob)
 
         # Send Story through Memory Cell
         initial_state = self.cell.zero_state(self.batch_size, dtype=tf.float32)
-        self.out, memories = tf.nn.dynamic_rnn(self.cell, story_embeddings,
+        self.out, memories = tf.nn.dynamic_rnn(self.cell, self.story_embeddings,
                                         sequence_length=self.length,
                                         initial_state=initial_state)
 
@@ -142,7 +142,7 @@ class EntityNetwork():
 
         # Generate Memory Scores
         p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,                   # Shape: [None, mem_slots]
-                                                      query_embedding), axis=[2]))
+                                                      self.query_embedding), axis=[2]))
 
         # Subtract max for numerical stability (softmax is shift invariant)
         p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
@@ -156,7 +156,7 @@ class EntityNetwork():
             u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
             # Output Transformations => Logits
-            hidden = sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
+            hidden = self.activation(tf.matmul(u, self.H) + tf.squeeze(self.query_embedding))      # Shape: [None, embed_sz]
             logits = tf.matmul(hidden, self.R)
             return logits
 

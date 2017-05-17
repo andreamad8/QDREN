@@ -19,7 +19,7 @@ class Dataset():
 
 
 
-    def get_minibatches(self,n, minibatch_size, shuffle=True):
+    def get_minibatches(self,n, minibatch_size, shuffle=False):
         idx_list = np.arange(0, n, minibatch_size)
         if shuffle:
             np.random.shuffle(idx_list)
@@ -217,7 +217,7 @@ def gen_embeddings(word_dict, dim, in_file=None, init=None):
         a randomly initialized vector will be used.
     """
 
-    num_words = max(word_dict.values()) +1 
+    num_words = max(word_dict.values()) +1
     # embeddings = np.zeros((num_words, dim))
     embeddings = np.random.standard_normal(size=(num_words, dim))
     logging.info('Embeddings: %d x %d' % (num_words, dim))

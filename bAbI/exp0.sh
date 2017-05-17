@@ -9,4 +9,4 @@ python run.py 14
 python run.py 18
 python run.py 18
 python run.py 5
-python run.py 6 
+python run.py 6

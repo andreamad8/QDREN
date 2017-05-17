@@ -16,18 +16,69 @@ import docopt
 import cPickle as pickle
 import logging
 import datetime
+import matplotlib.pyplot as plt
+import seaborn as sns
+plt.rc('text', usetex=True)
+plt.rc('font', family='Times-Roman')
+sns.set_style(style='white')
 
 
 def train(epoch,batch_size, data,par,dr, _test):
+
     def val_test(d,ty):
+        def sigmoid(x):
+            return 1 / (1 + np.exp(-x))
+
+        def viz():
+            s_s=[]
+            for m in mb_x1[0]:
+                t= []
+                for e in m:
+                    if(e!=0):
+                        t.append(data._data['vocab'][e-1])
+                if(len(t)>0):
+                    s_s.append(t)
+
+            s_s= [" ".join(sss) for sss in s_s]
+
+            q_q =[]
+            for e2 in mb_x2[0][0]:
+                if(e2!=0):
+                    q_q.append(data._data['vocab'][e2-1])
+            q_q = " ".join(q_q)
+
+            k,o,s,q,l= sess.run([entity_net.keys,entity_net.out,entity_net.story_embeddings,entity_net.query_embedding,entity_net.length],feed_dict=dic)
+            gs=[]
+
+            for i in range(l):
+                temp = np.split(o[0][i], len(k))
+                g =[]
+                for j in range(len(k)):
+                    g.append(sigmoid(np.inner(s[0][i],temp[j])+np.inner(s[0][i],k[j])+np.inner(s[0][i],q[0][0])))
+                gs.append(g)
+
+            plt.figure(figsize=(15,7.5))
+            ax = sns.heatmap(np.transpose(np.array(gs)),cmap="YlGnBu",vmin=0, vmax=1)
+            ax.set_xticks( [ i for i in range(len(s_s)) ] )
+            ax.set_xticklabels( s_s, rotation=45 )
+            ax.set_yticklabels([ i+1 for i in range(len(k)) ],rotation=0 )
+
+            plt.title(q_q+"?")
+            plt.tight_layout()
+            plt.show()
+
+
         _loss_val, _acc_val, _counter = 0.0, 0.0, 0
         for idx, (mb_x1, mb_x2, mb_y) in enumerate(d):
             dic = {entity_net.S:mb_x1,entity_net.Q:mb_x2,
                    entity_net.A:mb_y, entity_net.keep_prob:1.0}
             curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
             _loss_val, _acc_val, _counter = _loss_val + curr_loss_val, _acc_val + curr_acc_val, _counter + 1
-        logging.info("Epoch %d\t\t%s Loss: %.3f\t %s Accuracy: %.3f" % (e,ty,_loss_val / float(_counter),ty, _acc_val/float(_counter)))
+        #if(ty=='Validation' and e % 10 ==0 ):
+        #    viz()
+        logging.info("Epoch %d\t%s Loss: %.3f\t %s Accuracy: %.3f" % (e,ty[:4],_loss_val / float(_counter),ty, _acc_val/float(_counter)))
         return _loss_val / float(_counter), _acc_val/float(_counter)
+
 
     def tr(verbose):
         loss, acc, counter = 0.0, 0.0, 0
@@ -39,7 +90,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                                               feed_dict=dic)
             loss, acc, counter = loss + curr_loss, acc + curr_acc, counter + 1
             if counter % verbose == 0:
-                logging.info("Epoch %d\tBatch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, counter, loss / float(counter), acc / float(counter)))
+                logging.info("Epoch %d\tTrain Loss: %.3f\tTrain Accuracy: %.3f" % (e, loss / float(counter), acc / float(counter)))
         return loss / float(counter), acc / float(counter)
 
     def init():
@@ -62,7 +113,7 @@ def train(epoch,batch_size, data,par,dr, _test):
 
         logging.info('Training stated')
         all_train = data.gen_examples(batch_size,'train')
-        all_val   = data.gen_examples(batch_size,'val')
+        all_val   = data.gen_examples(1,'val')
         all_test  = data.gen_examples(batch_size,'test')
         best_val,patient= 0.0, 0.0
         for e in range(curr_epoch,epoch):
@@ -79,7 +130,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                 patient += 1.0
 
             # Early Stopping Condition
-            if patient > 15.0:
+            if patient > 100.0:
                 break
             sess.run(entity_net.epoch_increment)
 
