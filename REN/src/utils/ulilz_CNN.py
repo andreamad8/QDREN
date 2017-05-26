@@ -83,13 +83,13 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
     logging.info('Load data files..')
 
     logging.info('*' * 10 + ' Train')
-    train_examples = load_data('data/dailymail/train.txt', train_size, relabeling=True)
+    train_examples = load_data('data/train.txt', train_size, relabeling=True)
 
     logging.info('*' * 10 + ' Dev')
-    dev_examples = load_data('data/dailymail/dev.txt', dev_size, relabeling=True)
+    dev_examples = load_data('data/dev.txt', dev_size, relabeling=True)
 
     logging.info('*' * 10 + ' Test')
-    test_examples = load_data('data/dailymail/test.txt', test_size, relabeling=True)
+    test_examples = load_data('data/test.txt', test_size, relabeling=True)
 
 
     num_train = len(train_examples[0])
