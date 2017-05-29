@@ -97,7 +97,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                 patient += 1
 
             # Early Stopping Condition
-            if patient > 50:
+            if patient > 20:
                 break
             sess.run(entity_net.epoch_increment)
         with open(ckpt_dir + "training_logs.pik", 'w') as f:

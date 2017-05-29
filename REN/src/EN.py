@@ -74,7 +74,7 @@ class EntityNetwork():
             self.E = tf.get_variable("Embedding",[self.vocab_size, self.embedding_size], initializer=self.init)
 
         zero_mask = tf.constant([0 if i == 0 else 1 for i in range(self.vocab_size)],dtype=tf.float32, shape=[self.vocab_size, 1])
-        self.E = E * zero_mask
+        self.E = self.E * zero_mask
 
         # alpha = tf.get_variable(name='alpha',
         #                         shape=self.embedding_size,
