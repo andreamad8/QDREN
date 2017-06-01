@@ -97,10 +97,9 @@ class EntityNetwork():
         self.keys = [tf.get_variable('key_{}'.format(j), [self.embedding_size]) for j in range(self.num_blocks)]
 
 
-        if (not self.no_out):
-            # Output Module Variables
-            self.H = tf.get_variable("H", [self.embedding_size, self.embedding_size], initializer=self.init)
-            self.R = tf.get_variable("R", [self.embedding_size, self.label_num], initializer=self.init)
+        # Output Module Variables
+        self.H = tf.get_variable("H", [self.embedding_size, self.embedding_size], initializer=self.init)
+        self.R = tf.get_variable("R", [self.embedding_size, self.label_num], initializer=self.init)
 
 
     def inference(self):
@@ -144,21 +143,23 @@ class EntityNetwork():
         p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,                   # Shape: [None, mem_slots]
                                                       query_embedding), axis=[2]))
 
-        # Subtract max for numerical stability (softmax is shift invariant)
-        p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
-        attention = tf.nn.softmax(p_scores - p_max)
-        attention = tf.expand_dims(attention, 2)                                         # Shape: [None, mem_slots, 1]
 
         if (self.no_out):
-            return p_scores
+            u = tf.reduce_max(stacked_memories,axis=1,keep_dims=False)
+            # u = tf.reduce_mean(stacked_memories,axis=1,keep_dims=False)
         else:
+            # Subtract max for numerical stability (softmax is shift invariant)
+            p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
+            attention = tf.nn.softmax(p_scores - p_max)
+            attention = tf.expand_dims(attention, 2)                                         # Shape: [None, mem_slots, 1]
+
             # Weight memories by attention vectors
             u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
-            # Output Transformations => Logits
-            hidden = sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
-            logits = tf.matmul(hidden, self.R)
-            return logits
+        # Output Transformations => Logits
+        hidden = sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]
+        logits = tf.matmul(hidden, self.R)
+        return logits
 
     def loss(self):
         """
