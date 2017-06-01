@@ -80,7 +80,7 @@ def train(epoch,batch_size, data,par,dr, _test):
         all_test  = data.gen_examples(batch_size,'test')
         best_val,patient= 0.0, 0
         for e in range(curr_epoch,epoch):
-            train_loss[e], train_acc[e] = tr(1000)
+            train_loss[e], train_acc[e] = tr(200)
             val_loss[e], val_acc[e] = val_test(all_val,'Validation')
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')
