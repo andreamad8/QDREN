@@ -1,5 +1,5 @@
 from __future__ import print_function
-from memories.DMC_query import DynamicMemoryCell
+from memories.DMC import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax

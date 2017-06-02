@@ -29,25 +29,26 @@ def train(epoch,batch_size, data,par,dr, _test):
         def sigmoid(x):
             return 1 / (1 + np.exp(-x))
 
-        def viz():
+        def viz(epoch):
             s_s=[]
+            ### mb_x1 input senteces
             for m in mb_x1[0]:
-                t= []
+                t = []
                 for e in m:
-                    if(e!=0):
+                    if(e != 0):
                         t.append(data._data['vocab'][e-1])
-                if(len(t)>0):
+                if(len(t) > 0):
                     s_s.append(t)
 
-            s_s= [" ".join(sss) for sss in s_s]
+            s_s = [" ".join(sss) for sss in s_s]
 
-            q_q =[]
+            q_q = []
             for e2 in mb_x2[0][0]:
-                if(e2!=0):
+                if(e2 != 0):
                     q_q.append(data._data['vocab'][e2-1])
             q_q = " ".join(q_q)
 
-            k,o,s,q,l= sess.run([entity_net.keys,entity_net.out,entity_net.story_embeddings,entity_net.query_embedding,entity_net.length],feed_dict=dic)
+            k,o,s,q,l = sess.run([entity_net.keys,entity_net.out,entity_net.story_embeddings,entity_net.query_embedding,entity_net.length],feed_dict=dic)
             gs=[]
 
             for i in range(l):
@@ -59,14 +60,14 @@ def train(epoch,batch_size, data,par,dr, _test):
 
             plt.figure(figsize=(15,7.5))
             ax = sns.heatmap(np.transpose(np.array(gs)),cmap="YlGnBu",vmin=0, vmax=1)
-            ax.set_xticks( [ i for i in range(len(s_s)) ] )
-            ax.set_xticklabels( s_s, rotation=45 )
+            ax.set_xticks([i for i in range(len(s_s))])
+            ax.set_xticklabels(s_s,rotation=45)
             ax.set_yticklabels([ i+1 for i in range(len(k)) ],rotation=0 )
 
-            plt.title(q_q+"?")
+            plt.title(q_q+"?",fontsize=20)
             plt.tight_layout()
-            plt.show()
-
+            plt.savefig('data/plot/ep%d.png'%int(epoch), format='png', dpi=300)
+            plt.close()
 
         _loss_val, _acc_val, _counter = 0.0, 0.0, 0
         for idx, (mb_x1, mb_x2, mb_y) in enumerate(d):
@@ -74,8 +75,9 @@ def train(epoch,batch_size, data,par,dr, _test):
                    entity_net.A:mb_y, entity_net.keep_prob:1.0}
             curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
             _loss_val, _acc_val, _counter = _loss_val + curr_loss_val, _acc_val + curr_acc_val, _counter + 1
-        #if(ty=='Validation' and e % 10 ==0 ):
-        #    viz()
+        if(ty=='Validation' and e % 1 ==0 ):
+            logging.info("Start plotting")
+            viz(e)
         logging.info("Epoch %d\t%s Loss: %.3f\t %s Accuracy: %.3f" % (e,ty[:4],_loss_val / float(_counter),ty, _acc_val/float(_counter)))
         return _loss_val / float(_counter), _acc_val/float(_counter)
 
