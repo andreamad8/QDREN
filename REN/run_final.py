@@ -40,7 +40,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     opt = 'RMSProp',
     trainable = [1,1,0,0],
     max_norm = None,
-    no_out = False,
+    no_out = True,
     decay_steps = 0,
     decay_rate = 0,
     L2 = 0.0001
@@ -60,13 +60,13 @@ def main():
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
-    ## for sentence
-    # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
-    ## for windows
-    par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
-    logging.info(par)
-    t = train(epoch,batch_size, data, par, dr=dr, _test=True)
-
+    # ## for sentence
+    # # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+    # ## for windows
+    # par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
+    # logging.info(par)
+    # t = train(epoch,batch_size, data, par, dr=dr, _test=True)
+    #
 
 
 if __name__ == '__main__':

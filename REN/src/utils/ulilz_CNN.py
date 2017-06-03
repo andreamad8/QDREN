@@ -5,8 +5,7 @@ import gzip
 import logging
 from collections import Counter
 from iteration_utilities import flatten
-# import seaborn as sns
-# import matplotlib.pyplot as plt
+
 
 class Dataset():
     def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win):
@@ -126,12 +125,8 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
         train_x1, train_x2, train_l, train_y = vectorize(train_examples, word_dict, entity_dict, sent_len, sent_numb)
         dev_x1, dev_x2, dev_l, dev_y = vectorize(dev_examples, word_dict, entity_dict, sent_len, sent_numb)
         test_x1, test_x2, test_l, test_y = vectorize(test_examples, word_dict, entity_dict, sent_len, sent_numb)
-    #
-    # sns.distplot(train_y,bins=51)
-    # sns.distplot(dev_y,bins=51)
-    # sns.distplot(test_y,bins=51)
-    #
-    # plt.show()
+
+    plot_dist(train_y,dev_y,test_y)
     return {'train':{'S':train_x1, 'Q':train_x2, 'A':train_y},
             'val':{'S':dev_x1, 'Q':dev_x2, 'A':dev_y},
             'test':{'S':test_x1, 'Q':test_x2, 'A':test_y},
@@ -143,6 +138,42 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
             'embeddings_mat': embeddings,
             'label_num':num_labels}
 
+def plot_dist(train_y,dev_y,test_y):
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    plt.rc('text', usetex=True)
+    plt.rc('font', family='Times-Roman')
+    sns.set_style(style='white')
+    color = sns.color_palette("Set2", 10)
+    fig = plt.figure(figsize=(8,12))
+
+    ax1 = fig.add_subplot(3, 1, 1)
+    # plt.title("Label distribution",fontsize=20)
+    sns.distplot(train_y,kde=False,label='Training', hist=True, norm_hist=True,color="blue")
+    ax1.set_xlabel("Answer")
+    ax1.set_ylabel("Frequency")
+    ax1.set_xlim([0,500])
+    plt.legend(loc='best')
+
+    ax2 = fig.add_subplot(3, 1, 2)
+    sns.distplot(dev_y,kde=False,label='Validation', hist=True, norm_hist=True,color="green")
+    ax2.set_xlabel("Answer")
+    ax2.set_ylabel("Frequency")
+    ax2.set_xlim([0,500])
+    plt.legend(loc='best')
+
+    ax3 = fig.add_subplot(3, 1, 3)
+    sns.distplot(test_y,kde=False,label='Test', hist=True, norm_hist=True,color="red")
+    ax3.set_xlabel("Answer")
+    ax3.set_ylabel("Frequency")
+    ax3.set_xlim([0,500])
+    plt.legend(loc='best')
+
+
+
+    plt.savefig('checkpoints/label_dist.pdf', format='pdf', dpi=300)
+
+    plt.show()
 
 
 

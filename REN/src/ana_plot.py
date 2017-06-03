@@ -78,7 +78,7 @@ for j in range(1):
     # ax4.set_xlim([0,20])
     ax1.legend(loc='best')
     i+=1
-plt.savefig('checkpoints/data/FINAL_RIS/BEST_CNN_WIND_MULTI_Q/multiQ.pdf', format='pdf', dpi=300)
+# plt.savefig('checkpoints/data/FINAL_RIS/BEST_CNN_WIND_MULTI_Q/multiQ.pdf', format='pdf', dpi=300)
 plt.show()
 
 
