@@ -47,12 +47,12 @@ def main(task_num,sample_size=''):
     if not os.path.exists('data/ris/task_{}'.format(task_num)):
         os.makedirs('data/ris/task_{}'.format(task_num))
 
-    param_grid = {'nb': [20],
+    param_grid = {'nb': [40],
                   'lr': [0.001],
                   'tr': [[0,0,0,0]],
-                  'L2': [0.0],# [0.0,0.1,0.01,0.001,0.0001]
+                  'L2': [0.001],# [0.0,0.1,0.01,0.001,0.0001]
                   'bz': [32],
-                  'dr': [0.5],
+                  'dr': [0.7],
                   }
     grid = list(ParameterGrid(param_grid))
     np.random.shuffle(grid)

@@ -16,10 +16,15 @@ import docopt
 import cPickle as pickle
 import logging
 import datetime
+import os
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
-plt.rc('text', usetex=True)
-plt.rc('font', family='Times-Roman')
+#plt.rc('text', usetex=True)
+#plt.rc('font', family='Times-Roman')
 sns.set_style(style='white')
 
 
@@ -64,9 +69,9 @@ def train(epoch,batch_size, data,par,dr, _test):
             ax.set_xticklabels(s_s,rotation=45)
             ax.set_yticklabels([ i+1 for i in range(len(k)) ],rotation=0 )
 
-            plt.title(q_q+"?",fontsize=20)
+            plt.title(q_q+"?")
             plt.tight_layout()
-            plt.savefig('data/plot/ep%d.png'%int(epoch), format='png', dpi=300)
+            plt.savefig('data/plot/ep%d.pdf'%int(epoch), format='pdf', dpi=300)
             plt.close()
 
         _loss_val, _acc_val, _counter = 0.0, 0.0, 0
@@ -75,7 +80,7 @@ def train(epoch,batch_size, data,par,dr, _test):
                    entity_net.A:mb_y, entity_net.keep_prob:1.0}
             curr_loss_val, curr_acc_val = sess.run([entity_net.loss_val, entity_net.accuracy], feed_dict=dic)
             _loss_val, _acc_val, _counter = _loss_val + curr_loss_val, _acc_val + curr_acc_val, _counter + 1
-        if(ty=='Validation' and e % 1 ==0 ):
+        if(ty=='Validation' and e % 10 ==0 ):
             logging.info("Start plotting")
             viz(e)
         logging.info("Epoch %d\t%s Loss: %.3f\t %s Accuracy: %.3f" % (e,ty[:4],_loss_val / float(_counter),ty, _acc_val/float(_counter)))
