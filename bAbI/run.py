@@ -61,7 +61,7 @@ def main(task_num,sample_size=''):
 
         ## for sentence
         par = get_parameters(data,epoch,data._data['sent_len'],data._data['sent_numb'],embedding_size,params)
-        t = train(epoch,params['bz'], data, par, dr=params['dr'], _test=True)
+        t = train(epoch,params['bz'], data, par, dr=params['dr'], _test=False)
 
         acc = sorted([v for k,v in t[5].items()])[-1]
 
