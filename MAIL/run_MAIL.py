@@ -17,7 +17,6 @@ import random
 import docopt
 import cPickle as pickle
 import logging
-from data.email_util import send_email
 from sklearn.grid_search import ParameterGrid
 
 
@@ -42,14 +41,14 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size, params):
     return dists
 
 def main():
-    embedding_size = 100
-    epoch = 1
+    embedding_size = 200
+    epoch = 300
     best_accuracy = 0.0
     sent_numb,sent_len = None,None
     grind_ris={}
 
     param_grid = {'nb': [20,50],
-                  'lr': [0.001,0.0001],
+                  'lr': [.01,0.001,0.0001],
                   'tr': [[1,1,0,0]],
                   'L2': [0.001,0.0001],
                   'bz': [64],
@@ -62,7 +61,7 @@ def main():
     np.random.shuffle(grid)
     for params in list(grid):
 
-        data = Dataset(train_size=1,dev_size=1,test_size=1,sent_len=sent_len,
+        data = Dataset(train_size=100000,dev_size=None,test_size=None,sent_len=sent_len,
                         sent_numb=sent_numb, embedding_size=embedding_size,
                         max_windows=params['mw'],win=params['w'])
 
@@ -80,7 +79,7 @@ def main():
 
         grind_ris[str(params)] = acc
 
-        f_save = 'checkpoints/MAIL_WINDQ/{}.PIK'.format(str(params)+str(acc))
+        f_save = 'checkpoints/MAIL_WIND/{}.PIK'.format(str(params)+str(acc))
         with open(f_save, 'w') as f:
             pickle.dump((t), f)
 

@@ -126,7 +126,7 @@ def get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_si
         dev_x1, dev_x2, dev_l, dev_y = vectorize(dev_examples, word_dict, entity_dict, sent_len, sent_numb)
         test_x1, test_x2, test_l, test_y = vectorize(test_examples, word_dict, entity_dict, sent_len, sent_numb)
 
-    plot_dist(train_y,dev_y,test_y)
+    # plot_dist(train_y,dev_y,test_y)
     return {'train':{'S':train_x1, 'Q':train_x2, 'A':train_y},
             'val':{'S':dev_x1, 'Q':dev_x2, 'A':dev_y},
             'test':{'S':test_x1, 'Q':test_x2, 'A':test_y},
