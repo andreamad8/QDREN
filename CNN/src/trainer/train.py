@@ -84,15 +84,15 @@ def train(epoch,batch_size, data,par,dr, _test):
             val_loss[e], val_acc[e] = val_test(all_val,'Validation')
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')
-            
+
             with open(ckpt_dir + "training_logs.pik", 'w') as f:
                 pickle.dump((train_loss, train_acc, val_loss, val_acc, test_loss, test_acc), f)
             # Update best_val
             if val_acc[e] >= best_val:
                 best_val, patient = val_acc[e], 0
-                send_email("MAIL Best Accuracy: %.3f " % (best_val), 'in %s with param: %s' % (str(ckpt_dir),str(par)))
-                if (_test):
-                    send_email("MAIL Best Accuracy Test: %.3f \t Loss Test: %.3f" % (test_loss[e], test_acc[e]),'in %s' % str(ckpt_dir))
+                #send_email("MAIL Best Accuracy: %.3f " % (best_val), 'in %s with param: %s' % (str(ckpt_dir),str(par)))
+                #if (_test):
+                #    send_email("MAIL Best Accuracy Test: %.3f \t Loss Test: %.3f" % (test_loss[e], test_acc[e]),'in %s' % str(ckpt_dir))
             else:
                 patient += 1
 
