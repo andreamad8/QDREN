@@ -35,9 +35,9 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     sent_numb = sent_numb,
     embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"],
-    learning_rate= 0.01,
+    learning_rate= 0.001,
     clip_gradients= 40.0,
-    opt = 'RMSProp',
+    opt = 'Adam',
     trainable = [1,1,0,0],
     max_norm = None,
     no_out = False,
@@ -52,18 +52,18 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
 def main():
     embedding_size = 100
     epoch = 200
-    sent_numb,sent_len =  None,None
-    max_windows,win = 150,4
-    batch_size = 64
-    dr = 0.5
+    sent_numb,sent_len =  50,30
+    max_windows,win = None,None
+    batch_size = 128
+    dr = 0.7
     data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
     # ## for sentence
-    # # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+    par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
     # ## for windows
-    par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
+    # par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
     logging.info(par)
     t = train(epoch,batch_size, data, par, dr=dr, _test=True)
 

@@ -95,9 +95,9 @@ def get_train_test(which_task='data/tasks_1-20_v1-2/en/',task_num=1):
     S, Q, A = vectorize_data(train, word_idx, sentence_size, max_story_size)
     valS, valQ, valA = vectorize_data(val, word_idx, sentence_size, max_story_size)
     testS, testQ, testA = vectorize_data(test, word_idx, sentence_size, max_story_size)
-    return {'train':{'S':S, 'Q':np.expand_dims(Q, axis=1), 'A':A},
-            'val':{'S':valS, 'Q':np.expand_dims(valQ, axis=1), 'A':valA},
-            'test':{'S':testS, 'Q':np.expand_dims(testQ, axis=1), 'A':testA},
+    return {'train':{'S':S, 'Q':Q, 'A':A},
+            'val':{'S':valS, 'Q':valQ, 'A':valA},
+            'test':{'S':testS, 'Q':testQ, 'A':testA},
             'vocab':vocab,
             'vocab_size':vocab_size,
             'sent_len':sentence_size,

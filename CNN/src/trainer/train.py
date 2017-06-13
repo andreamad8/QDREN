@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.EN import EntityNetwork
+from src.EN_bi import EntityNetwork
 import numpy as np
 import tensorflow as tf
 import tflearn
@@ -80,7 +80,7 @@ def train(epoch,batch_size, data,par,dr, _test):
         all_test  = data.gen_examples(batch_size,'test')
         best_val,patient= 0.0, 0
         for e in range(curr_epoch,epoch):
-            train_loss[e], train_acc[e] = tr(200)
+            train_loss[e], train_acc[e] = tr(2000)
             val_loss[e], val_acc[e] = val_test(all_val,'Validation')
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')

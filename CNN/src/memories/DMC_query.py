@@ -84,9 +84,6 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
 
             b = tf.get_variable('biasU',[self._num_units_per_block])
-            # self._q = tf.Print(self._q, [self._q],summarize=10)
-            # TODO: layer norm?
-
 
             state = tf.split(state, self._num_blocks, 1)
             next_states = []

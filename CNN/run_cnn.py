@@ -7,8 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.utils.ulilz_CNN import Dataset, gen_embeddings
-from src.EN import EntityNetwork
+from src.utils.ulilz_CNN import Dataset
 from src.trainer.train import train
 import numpy as np
 import tensorflow as tf
@@ -25,14 +24,11 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size, params):
     create a random configuration from using dists to select random parameters
     :return: neural network parameters for create_model
     """
-    #
-    # embedding_file = 'data/glove.6B.{}d.txt'.format(embedding_size)
-    # embeddings_mat = gen_embeddings(data._data['word_idx'], embedding_size, embedding_file)
     dists = dict(
     vocab_size = data._data["vocab_size"],label_num = data._data["vocab_size"],
     sent_len = sent_len, sent_numb = sent_numb, embedding_size = embedding_size,
     embeddings_mat = data._data['embeddings_mat'], clip_gradients= 40.0,
-    max_norm = None, no_out = False, decay_steps = 0, decay_rate = 0, opt = params['op'],
+    max_norm = None, no_out = True, decay_steps = 0, decay_rate = 0, opt = params['op'],
     num_blocks = params['nb'],
     learning_rate= params['lr'],
     trainable = params['tr'],
@@ -47,7 +43,7 @@ def main():
     sent_numb,sent_len = None,None
     grind_ris={}
 
-    param_grid = {'nb': [20,50],
+    param_grid = {'nb': [5],
                   'lr': [0.01,0.001,0.0001],
                   'tr': [[1,1,0,0]],
                   'L2': [0.001,0.0001],
@@ -79,7 +75,7 @@ def main():
 
         grind_ris[str(params)] = acc
 
-        f_save = 'checkpoints/CNN_WINDQ/{}.PIK'.format(str(params)+str(acc))
+        f_save = 'checkpoints/CNN_WIND/{}.PIK'.format(str(params)+str(acc))
         with open(f_save, 'w') as f:
             pickle.dump((t), f)
 

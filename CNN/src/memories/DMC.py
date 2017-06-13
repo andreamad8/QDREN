@@ -6,7 +6,6 @@ import tensorflow as tf
 import functools
 
 
-
 def prelu_func(features, initializer=None, scope=None):
     """
     Implementation of [Parametric ReLU](https://arxiv.org/abs/1502.01852) borrowed from Keras.
@@ -84,8 +83,6 @@ class DynamicMemoryCell(tf.contrib.rnn.RNNCell):
             W = tf.get_variable('W', [self._num_units_per_block, self._num_units_per_block])
 
             b = tf.get_variable('biasU',[self._num_units_per_block])
-
-            # TODO: layer norm?
 
             state = tf.split(state, self._num_blocks, 1)
             next_states = []
