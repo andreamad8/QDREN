@@ -7,7 +7,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.utils.ulilz_CNN import Dataset
+from src.utils.ulilz_MAIL import Dataset
+from src.EN import EntityNetwork
 from src.trainer.train import train
 import numpy as np
 import tensorflow as tf
@@ -29,14 +30,14 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 20,
+    num_blocks = 90,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"],
-    learning_rate= 0.01,
+    learning_rate= 0.0001,
     clip_gradients= 40.0,
-    opt = 'RMSProp',
+    opt = 'Adam',
     trainable = [1,1,0,0],
     max_norm = None,
     no_out = True,
@@ -52,15 +53,15 @@ def main():
     embedding_size = 100
     epoch = 200
     sent_numb,sent_len =  None,None
-    max_windows,win = 150,4
-    batch_size = 64
-    dr = 0.5
+    max_windows,win = 100,4
+    batch_size = 128
+    dr = 0.7
     data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
     # ## for sentence
-    # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
+    # # par = get_parameters(data,epoch,sent_len,sent_numb,embedding_size)
     # ## for windows
     par = get_parameters(data,epoch,(win*2)+1,max_windows,embedding_size)
     logging.info(par)

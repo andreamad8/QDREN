@@ -46,13 +46,12 @@ for j in range(1):
     acc_val = [v for k,v in data[3].items()]
     acc_test = [v for k,v in data[5].items()]
 
-    idx = np.where(acc_val == max(acc_val))[0][-1]
-    print('loss_train:'+ str(loss_train[idx]))
-    print('loss_val:'+ str(loss_val[idx]))
-    print('loss_test:'+ str(loss_test[idx]))
-    print('acc_train:'+ str(acc_train[idx]))
-    print('acc_val:'+ str(acc_val[idx]))
-    print('acc_test:'+ str(acc_test[idx]))
+    print('loss_train:'+ str(min(loss_train)))
+    print('loss_val:'+ str(min(loss_val)))
+    print('loss_test:'+ str(min(loss_test)))
+    print('acc_train:'+ str(max(acc_train)))
+    print('acc_val:'+ str(max(acc_val)))
+    print('acc_test:'+ str(max(acc_test)))
 
     ax1 = fig.add_subplot(2, 1, 1)
     plt.title("Learning Curves")
