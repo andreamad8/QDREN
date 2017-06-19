@@ -63,7 +63,7 @@ def train(epoch,batch_size, data,par,dr, _test):
         ckpt_dir,train_loss, train_acc, val_loss, val_acc, test_loss, test_acc = init()
 
         # Initialize Saver
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(max_to_keep=1)
         # Initialize all Variables
         if os.path.exists(ckpt_dir + "checkpoint"):
             logging.info('Restoring Variables from Checkpoint!')
@@ -86,7 +86,7 @@ def train(epoch,batch_size, data,par,dr, _test):
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')
 
-            saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step,max_to_keep=1)
+            saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step)
 
             with open(ckpt_dir + "training_logs.pik", 'w') as f:
                 pickle.dump((train_loss, train_acc, val_loss, val_acc, test_loss, test_acc), f)
