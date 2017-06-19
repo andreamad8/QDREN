@@ -29,17 +29,17 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     dists = dict(
     vocab_size = data._data["vocab_size"],
     label_num = data._data["label_num"],
-    num_blocks = 20,
+    num_blocks = 50,
     sent_len = sent_len,
     sent_numb = sent_numb,
     embedding_size = embedding_size,
     embeddings_mat = data._data["embeddings_mat"],
-    learning_rate= 0.01,
+    learning_rate= 0.0001,
     clip_gradients= 40.0,
     opt = 'RMSProp',
     trainable = [1,1,0,0],
     max_norm = None,
-    no_out = True,
+    no_out = False,
     decay_steps = 0,
     decay_rate = 0,
     L2 = 0.0001
@@ -52,7 +52,7 @@ def main():
     embedding_size = 100
     epoch = 200
     sent_numb,sent_len =  None,None
-    max_windows,win = 150,4
+    max_windows,win = 150,5
     batch_size = 64
     dr = 0.5
     data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,

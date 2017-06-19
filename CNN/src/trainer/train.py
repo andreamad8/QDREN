@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.EN_bi import EntityNetwork
+from src.EN import EntityNetwork
 import numpy as np
 import tensorflow as tf
 import tflearn
@@ -48,6 +48,7 @@ def train(epoch,batch_size, data,par,dr, _test):
         ckpt_dir = "checkpoints/CNN{}/".format(datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y").replace(":", "").replace(" ", ""))
         if not os.path.exists(ckpt_dir):
             os.mkdir(ckpt_dir)
+
         # Initialize all Variables
         if os.path.exists(ckpt_dir + "checkpoint"):
             with open(ckpt_dir + "training_logs.pik", 'r') as f:
@@ -85,12 +86,14 @@ def train(epoch,batch_size, data,par,dr, _test):
             if (_test):
                 test_loss[e], test_acc[e] = val_test(all_test,'Test')
 
+            saver.save(sess, ckpt_dir + "model.ckpt", global_step=entity_net.epoch_step,max_to_keep=1)
+
             with open(ckpt_dir + "training_logs.pik", 'w') as f:
                 pickle.dump((train_loss, train_acc, val_loss, val_acc, test_loss, test_acc), f)
             # Update best_val
             if val_acc[e] >= best_val:
                 best_val, patient = val_acc[e], 0
-                #send_email("MAIL Best Accuracy: %.3f " % (best_val), 'in %s with param: %s' % (str(ckpt_dir),str(par)))
+                send_email("MAIL Best Accuracy: %.3f " % (best_val), 'in %s with param: %s' % (str(ckpt_dir),str(par)))
                 #if (_test):
                 #    send_email("MAIL Best Accuracy Test: %.3f \t Loss Test: %.3f" % (test_loss[e], test_acc[e]),'in %s' % str(ckpt_dir))
             else:
