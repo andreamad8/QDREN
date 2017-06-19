@@ -36,7 +36,7 @@ def get_parameters(data,epoch,sent_len,sent_numb,embedding_size):
     embeddings_mat = data._data["embeddings_mat"],
     learning_rate= 0.0001,
     clip_gradients= 40.0,
-    opt = 'RMSProp',
+    opt = 'Atom',
     trainable = [1,1,0,0],
     max_norm = None,
     no_out = False,
@@ -55,7 +55,7 @@ def main():
     max_windows,win = 150,5
     batch_size = 64
     dr = 0.5
-    data = Dataset(train_size=10,dev_size=10,test_size=10,sent_len=sent_len,
+    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 

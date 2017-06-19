@@ -1,5 +1,5 @@
 from __future__ import print_function
-from memories.DMC import DynamicMemoryCell
+from memories.DMC_query import DynamicMemoryCell
 import numpy as np
 import tensorflow as tf
 from tflearn.activations import sigmoid, softmax
@@ -142,25 +142,40 @@ class EntityNetwork():
 
         # Output Module
         # stacked_memories = tf.stack(memories, axis=1)
-        memories = tf.concat([memories[0], memories[1]],1)
-        stacked_memories = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
+
 
 
         # Generate Memory Scores
 
 
         if (self.no_out):
+            memories = tf.concat([memories[0], memories[1]],1)
+            stacked_memories = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
             u = tf.reduce_max(stacked_memories,axis=1,keep_dims=False)
             # u = tf.reduce_mean(stacked_memories,axis=1,keep_dims=False)
         else:
             # Subtract max for numerical stability (softmax is shift invariant)
+            memories = memories[0]
+            stacked_memories = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
             p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,query_embedding), axis=[2]))# Shape: [None, mem_slots]
             p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
             attention = tf.nn.softmax(p_scores - p_max)
             attention = tf.expand_dims(attention, 2)                                         # Shape: [None, mem_slots, 1]
 
             # Weight memories by attention vectors
-            u = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
+            a = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
+
+
+            memories = memories[1]
+            stacked_memories_1 = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
+            p_scores_1 = softmax(tf.reduce_sum(tf.multiply(stacked_memories_1,query_embedding), axis=[2]))# Shape: [None, mem_slots]
+            p_max_1 = tf.reduce_max(p_scores_1, axis=-1, keep_dims=True)
+            attention_1 = tf.nn.softmax(p_scores_1 - p_max_1)
+            attention_1 = tf.expand_dims(attention_1, 2)                                         # Shape: [None, mem_slots, 1]
+
+            # Weight memories by attention vectors
+            b = tf.reduce_sum(tf.multiply(stacked_memories_1, attention_1), axis=1)
+            u = tf.concat([a,b],1)
 
         # Output Transformations => Logits
         hidden = sigmoid(tf.matmul(u, self.H) + tf.squeeze(query_embedding))      # Shape: [None, embed_sz]

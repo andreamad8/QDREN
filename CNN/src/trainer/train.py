@@ -7,7 +7,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import sys
 import time
 import datetime
-from src.EN import EntityNetwork
+from src.EN_bi import EntityNetwork
 import numpy as np
 import tensorflow as tf
 import tflearn
