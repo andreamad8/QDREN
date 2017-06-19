@@ -11,13 +11,6 @@ import ast
 import cPickle as pickle
 
 
-
-
-
-
-
-
-
 # d1 = pickle.load( open('checkpoints/grid_simple_CBT_NE_SIMPLE.pik', "rb" ) )
 # d2 = pickle.load( open('checkpoints/grid_simple_CBT_NE_NORMAL.pik', "rb" ) )
 #
@@ -33,69 +26,56 @@ plt.rc('text', usetex=True)
 plt.rc('font', family='Times-Roman')
 sns.set_style(style='white')
 color = sns.color_palette("Set2", 10)
-fig = plt.figure(figsize=(10,10))
-i=1
+fig = plt.figure(figsize=(10, 10))
+i = 1
 for j in range(1):
-    data = pickle.load( open('checkpoints/training_logs.pik'.format(j), "rb" ) )
+    data = pickle.load(open('checkpoints/training_logs.pik'.format(j), "rb"))
 
-    loss_train = [v for k,v in data[0].items()]
-    loss_val = [v for k,v in data[2].items()]
-    loss_test = [v for k,v in data[4].items()]
+    loss_train = [v for k, v in data[0].items()]
+    loss_val = [v for k, v in data[2].items()]
+    loss_test = [v for k, v in data[4].items()]
 
-    acc_train = [v for k,v in data[1].items()]
-    acc_val = [v for k,v in data[3].items()]
-    acc_test = [v for k,v in data[5].items()]
+    acc_train = [v for k, v in data[1].items()]
+    acc_val = [v for k, v in data[3].items()]
+    acc_test = [v for k, v in data[5].items()]
 
     idx = np.where(acc_val == max(acc_val))[0][-1]
-    print('loss_train:'+ str(loss_train[idx]))
-    print('loss_val:'+ str(loss_val[idx]))
-    print('loss_test:'+ str(loss_test[idx]))
-    print('acc_train:'+ str(acc_train[idx]))
-    print('acc_val:'+ str(acc_val[idx]))
-    print('acc_test:'+ str(acc_test[idx]))
+    print('loss_train:' + str(loss_train[idx]))
+    print('loss_val:' + str(loss_val[idx]))
+    print('loss_test:' + str(loss_test[idx]))
+    print('acc_train:' + str(acc_train[idx]))
+    print('acc_val:' + str(acc_val[idx]))
+    print('acc_test:' + str(acc_test[idx]))
 
     ax1 = fig.add_subplot(2, 1, 1)
     plt.title("Learning Curves")
     # ax1.set_xlim([0,20])
-    plt.plot(loss_train,linewidth=1.95, alpha=0.7, color='gray',label='Training')
-    plt.plot(loss_val,linewidth=1.95,linestyle='--',alpha=0.7, color='red',label='Validation')
+    plt.plot(loss_train, linewidth=1.95, alpha=0.7,
+             color='gray', label='Training')
+    plt.plot(loss_val, linewidth=1.95, linestyle='--',
+             alpha=0.7, color='red', label='Validation')
     # plt.plot(loss_test)
     ax1.set_ylabel("Loss")
     ax1.set_xlabel("Epoch")
-
 
     ax2 = fig.add_subplot(2, 1, 2)
     # plt.title("Accuracy")
 
     # ax3.set_xlim([0,20])
-    plt.plot(acc_train,linewidth=1.95, alpha=0.7, color='gray',label='Training')
-    plt.plot(acc_val,linewidth=1.95,linestyle='--',alpha=0.7, color='red',label='Validation')
+    plt.plot(acc_train, linewidth=1.95, alpha=0.7,
+             color='gray', label='Training')
+    plt.plot(acc_val, linewidth=1.95, linestyle='--',
+             alpha=0.7, color='red', label='Validation')
     # plt.plot(acc_test)
     ax2.set_ylabel("Accuracy")
     ax2.set_xlabel("Epoch")
 
-
     # ax4 = fig.add_subplot(2, 2, 4)
     # ax4.set_xlim([0,20])
     ax1.legend(loc='best')
-    i+=1
+    i += 1
 # plt.savefig('checkpoints/data/FINAL_RIS/CNN_WIND/wind.pdf', format='pdf', dpi=300)
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # data=[]
