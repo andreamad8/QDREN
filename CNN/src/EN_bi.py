@@ -155,8 +155,7 @@ class EntityNetwork():
             # u = tf.reduce_mean(stacked_memories,axis=1,keep_dims=False)
         else:
             # Subtract max for numerical stability (softmax is shift invariant)
-            memories = memories[0]
-            stacked_memories = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
+            stacked_memories = tf.stack(tf.split(memories[0], self.num_blocks, 1), 1)
             p_scores = softmax(tf.reduce_sum(tf.multiply(stacked_memories,query_embedding), axis=[2]))# Shape: [None, mem_slots]
             p_max = tf.reduce_max(p_scores, axis=-1, keep_dims=True)
             attention = tf.nn.softmax(p_scores - p_max)
@@ -166,8 +165,7 @@ class EntityNetwork():
             a = tf.reduce_sum(tf.multiply(stacked_memories, attention), axis=1)          # Shape: [None, embed_sz]
 
 
-            memories = memories[1]
-            stacked_memories_1 = tf.stack(tf.split(memories, self.num_blocks, 1), 1)
+            stacked_memories_1 = tf.stack(tf.split(memories[1], self.num_blocks, 1), 1)
             p_scores_1 = softmax(tf.reduce_sum(tf.multiply(stacked_memories_1,query_embedding), axis=[2]))# Shape: [None, mem_slots]
             p_max_1 = tf.reduce_max(p_scores_1, axis=-1, keep_dims=True)
             attention_1 = tf.nn.softmax(p_scores_1 - p_max_1)
