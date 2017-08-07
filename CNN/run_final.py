@@ -52,10 +52,10 @@ def main():
     embedding_size = 100
     epoch = 200
     sent_numb,sent_len =  None,None
-    max_windows,win = 150,5
+    max_windows,win = 150,4
     batch_size = 64
     dr = 0.5
-    data = Dataset(train_size=10,dev_size=10,test_size=10,sent_len=sent_len,
+    data = Dataset(train_size=None,dev_size=None,test_size=None,sent_len=sent_len,
                     sent_numb=sent_numb, embedding_size=embedding_size,
                     max_windows=max_windows,win=win)
 
