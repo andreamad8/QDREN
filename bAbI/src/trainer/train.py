@@ -18,9 +18,6 @@ import logging
 import datetime
 import os
 import matplotlib as mpl
-if os.environ.get('DISPLAY','') == '':
-    print('no display found. Using non-interactive Agg backend')
-    mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 #plt.rc('text', usetex=True)
@@ -56,7 +53,7 @@ def train(epoch,batch_size, data,par,dr, _test):
             k,o,s,q,l = sess.run([entity_net.keys,entity_net.out,entity_net.story_embeddings,entity_net.query_embedding,entity_net.length],feed_dict=dic)
             gs=[]
 
-            for i in range(l):
+            for i in range(int(l)):
                 temp = np.split(o[0][i], len(k))
                 g =[]
                 for j in range(len(k)):

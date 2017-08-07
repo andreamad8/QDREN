@@ -1,5 +1,4 @@
 import numpy as np
-import config
 import cPickle as pickle
 import gzip
 import logging
@@ -10,49 +9,6 @@ from iteration_utilities import flatten
 class Dataset():
     def __init__(self,train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows,win):
         self._data = get_train_test(train_size,dev_size,test_size,sent_len,sent_numb,embedding_size,max_windows=max_windows, win=win)
-    #     self.num_batches=0
-    #
-    # def make_batches(self,size, batch_size):
-    #     """Returns a list of batch indices (tuples of indices).
-    #     # Arguments
-    #         size: Integer, total size of the data to slice into batches.
-    #         batch_size: Integer, batch size.
-    #     # Returns
-    #         A list of tuples of array indices.
-    #     """
-    #     self.num_batches = int(np.ceil(size / float(batch_size)))
-    #     return [(i * batch_size, min(size, (i + 1) * batch_size)) for i in range(0, self.num_batches)]
-    #
-    # def unison_shuffled_copies(self,a, b,c):
-    #     assert len(a) == len(b)
-    #     p = np.random.permutation(len(a))
-    #     return a[p], b[p], c[p]
-    #
-    # def get_batch_train(self,batch_size,data):
-    #     randomize = np.arange(len(self._data[data]['S']))
-    #     np.random.shuffle(randomize)
-    #     self._data[data]['S'] = self._data[data]['S'][randomize]
-    #     self._data[data]['Q'] = self._data[data]['Q'][randomize]
-    #     self._data[data]['A'] = self._data[data]['A'][randomize]
-    #     return self.make_batches(len(self._data[data]['S']), batch_size)
-    #
-    # def get_dic_train(self,S_input,Q_input,A_input,keep_prob,i,j,dr):
-    #     return {S_input:self._data['train']['S'][i:j],
-    #             Q_input:self._data['train']['Q'][i:j],
-    #             A_input:self._data['train']['A'][i:j],
-    #             keep_prob:dr}
-    #
-    # def get_dic_val(self,S_input,Q_input,A_input,keep_prob,i,j):
-    #     return {S_input:self._data['val']['S'][i:j],
-    #             Q_input:self._data['val']['Q'][i:j],
-    #             A_input:self._data['val']['A'][i:j],
-    #             keep_prob:1.0}
-    #
-    # def get_dic_test(self,S_input,Q_input,A_input,keep_prob,i,j):
-    #     return {S_input:self._data['test']['S'][i:j],
-    #             Q_input:self._data['test']['Q'][i:j],
-    #             A_input:self._data['test']['A'][i:j],
-    #             keep_prob:1.0}
 
     def get_minibatches(self,n, minibatch_size, shuffle=True):
         idx_list = np.arange(0, n, minibatch_size)
