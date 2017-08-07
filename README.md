@@ -1,5 +1,5 @@
 # Question Dependent Recurrent Entity Network (QDREN)
-This is a TensorFlow implementation of the Question Dependent Recurrent Entity Network (QDREN), which is a model based on the Recurrent Entity Network [Henaff]. We named our model Question Dependent Recurrent Entity Network since our main contribution is to include the question into the memorization process. The following figure shows an overview of the QDREN model. We tested our model using 2 datasets: bAbI tasks [Peng] with 1K samples, and CNN news article [Hermann]. In the bAbI task 1K sample we successfully passed 12 tasks.
+This is a TensorFlow implementation of the Question Dependent Recurrent Entity Network (QDREN), which is a model based on the Recurrent Entity Network [Henaff]. We named our model Question Dependent Recurrent Entity Network since our main contribution is to include the question into the memorization process. The following figure shows an overview of the QDREN model. We tested our model using 2 datasets: bAbI tasks [Peng] with 1K samples, and CNN news article [Hermann]. In the bAbI task 1K sample, we successfully passed 12 tasks.
 
 <p align="center">
 <img src="img/QDRENIMG.png" width="50%" />
@@ -13,11 +13,66 @@ The data used for the experiments are available at:
 - [FAIR](https://research.fb.com/downloads/babi/) for the bAbI tasks
 - [http://cs.stanford.edu/~danqi/data/cnn.tar.gz](http://cs.stanford.edu/~danqi/data/cnn.tar.gz) already preprocessed, and the original one from [https://github.com/deepmind/rc-data](https://github.com/deepmind/rc-data ) for the CNN news article
 
+The dataset must be downloaded and save it in the data folder (on the right data folder). Moreover, you have to download in the data folder the glove embeddings ([http://nlp.stanford.edu/data/glove.6B.zip](http://nlp.stanford.edu/data/glove.6B.zip)) 
+
+## User guide
+### Dependency 
+I run the code using Python 2.7 but should also work with Python 3. Then the following python package must be installed:
+
+```python
+pip install numpy
+pip install tensorflow
+pip install tflearn
+pip install logging
+pip install sklearn
+pip install scipy
+pip install pandas
+pip install seaborn
+pip install matplotlib
+pip install tqdm
+pip install imageio
+```
+### How to run the code
+The code is separated into two folders depending on which dataset we are running. In both folders, we have a file for running the model selection `run.py` and one to test the model `run_final.py`. The latter trains the model with the best hyper-parameters and at the same time checks the accuracy of the test set at each epoch.
+
+In the `run.py` is possible to select which hyper-parameters to test. For instance adding parameters in this dic:
+
+```python
+    param_grid = {'nb': [20], ## number of memory blocks 
+                  'lr': [0.01,0.001,0.0001],
+                  'tr': [[1,1,0,0]], ## mask => [pretrain_emb,train/no_train, None, None]
+                  'L2': [0.001,0.0001],
+                  'bz': [64], ## batch size
+                  'dr': [0.5],
+                  'mw': [150], ## number of window / or sentences in case the input are sents
+                  'w' : [3,4,5], ## window size
+                  'op': ['Adam']
+                  }
+```
+
+In case you wanna run the original Entity Network you need to change the import in 'src/EN.py' from `from memories.DMC_query import DynamicMemoryCell` to simply `from memories.DMC import DynamicMemoryCell`.
+
+Moreover, if you run the bAbi task you need to select which task to run. For example, to run task 3:
+
+```python
+python run.py 3
+```
+
+### Visualization
+In case you are running the bAbI task, you can visualize the activation of the gating function. In it is enough to add a plot folder in the data folder. Then each 10 epoch you will see a pdf file showing the plot. Until now I suggest to use it with a task with no more than 10 sentences, else the label in y-axes will overlap. By default, the visualization is done with the last Validation sample. There is also a script for creating a gif with the saved images. An example of the visualization is shown in the following (Task 1 bAbI).
+
+**Question Dependent Recurrent Entity Network**
+![QDREN](img/QDREN.gif)
+
+**Recurrent Entity Network**
+![REN](img/REN.gif)
+
+Heatmap representing the gating function result for each memory block. In the y-axes represents the memory block number (20 in this example), in the x-axes, there are the sentences in the input divided into time steps, and at the top, there is the question to be answered. Darker colour means a gate more open (values close to 1) and lighter colour means the gate less open
 
 ## Results 
 
 ### bAbI 1K
-Comparisons between n-gram, LSTM, QDREN, REN and End To End Memory Network (MemN2N). All the results have been take from the original articles where they were firstly presented. In bold we highlight the task in which we greatly outperform the other models.
+Comparisons between n-gram, LSTM, QDREN, REN and End To End Memory Network (MemN2N). All the results have been taken from the original articles where they were first presented. In bold we highlight the task in which we greatly outperform the other models.
 
 | **Task** | **n-gram** | **LSTM** | **MemN2N** | **REN** | **QDREN** |
 |:--------:|:----------:|:--------:|:----------:|:-------:|:---------:|
@@ -55,7 +110,7 @@ To check whether our QDREN could improve the existent REN and whether the window
 
 -   **QDREN + WIND**: our proposed model using window-based input
 
-Then we also compare our results with: Max Freq., Frame-semantic model, Word distance, Standford Attentive Reader (AR), LSTM reader (LSTM), Attentive Reader, End To End Memory Network (MemN2N), and Attention Over Attention (AoA). All the results have been take from the original articles where they were firstly presented.
+Then we also compare our results with Max Freq., Frame-semantic model, Word distance, Standford Attentive Reader (AR), LSTM reader (LSTM), Attentive Reader, End To End Memory Network (MemN2N), and Attention Over Attention (AoA). All the results have been taken from the original articles where they were first presented.
 
 |              | **REN+SENT** |   **REN+WIND**  | **QDREN+SENT** | **QDREN+WIND** |
 |-------------:|:------------:|:---------------:|:--------------:|:--------------:|
