@@ -8,6 +8,17 @@ This is a TensorFlow implementation of the Question Dependent Recurrent Entity N
 
 Different implementations of the original Recurrent Entity Network are available online. The original, that uses Torch 7, is available [here](https://github.com/facebook/MemNN/tree/master/EntNet-babi), and another one which also uses TensorFlow, and helped a lot in our implementation, is available [here](https://github.com/jimfleming/recurrent-entity-networks).
 
+## Citation
+If you wish to reuse the QDREN model, please properly cite the following paper:
+```
+ @article{madotto2017question,
+  title={Question Dependent Recurrent Entity Network for Question Answering},
+  author={Madotto, Andrea and Attardi, Giuseppe},
+  journal={arXiv preprint arXiv:1707.07922},
+  year={2017}
+}
+```
+
 ## Datasets
 The data used for the experiments are available at:
 - [FAIR](https://research.fb.com/downloads/babi/) for the bAbI tasks
